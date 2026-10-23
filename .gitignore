@@ -1,2 +1,5 @@
 graphify-out/
 __pycache__/
+
+# Web research evidence (research skill)
+.research/
