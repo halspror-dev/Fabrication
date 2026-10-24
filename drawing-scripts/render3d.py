@@ -84,8 +84,10 @@ def build(explode=0.0, show_can=True, show_trigger=True):
         extrude(tsc, "xz", -0.0625 - HD, -0.0625, 17, (0.16, 0.16, 0.17))
         # pivot shoulder bolt: head outboard, shoulder through trigger to the frame
         revolve([(0, -0.16), (0.22, -0.16), (0.22, -0.07), (0.125, -0.07), (0.125, 0.30), (0, 0.30)], 20, (0.22, 0.22, 0.22), n=24, axis="y", center=(P[0], 0, P[1]))
-    # up-stop shoulder bolt: head outboard, 1/4" shoulder under the trigger tail, nut on the far side of the frame
-    revolve([(0, -0.25), (0.19, -0.25), (0.19, -0.155), (0.125, -0.155), (0.125, 0.095), (0.095, 0.095), (0.095, 0.36), (0, 0.36)],
+    # up-stop: button screw head outboard, 10 mm nylon spacer under the trigger tail, nut on the far side of the frame
+    SR = g["STOP_R"]
+    revolve([(0, -0.192), (0.19, -0.192), (0.19, -0.102), (0, -0.102)], 27, (0.22, 0.22, 0.22), n=24, axis="y", center=(S[0], 0, S[1]))
+    revolve([(0, -0.102), (SR, -0.102), (SR, 0.095), (0.095, 0.095), (0.095, 0.36), (0, 0.36)],
             25, (0.75, 0.22, 0.18), n=24, axis="y", center=(S[0], 0, S[1]))
     revolve([(0, 0.22), (0.19, 0.22), (0.19, 0.36), (0, 0.36)], 26, (0.22, 0.22, 0.22), n=6, axis="y", center=(S[0], 0, S[1]))
     # keeper thumbscrew: knurled head, washer, shank, nut under collar
@@ -182,7 +184,7 @@ if __name__ == "__main__":
     with PdfPages(out) as pdf:
         fig = plt.figure(figsize=(8.5, 11))
         fig.text(0.06, 0.965, "3D VIEWS: assembled on a can", fontsize=11, weight="bold")
-        fig.text(0.06, 0.95, "Blue = collar, green = keeper, tan = handle plate, light gray = angle clip, dark gray = trigger, near-black = HDPE scales, black = bolts, red = up-stop bolt.\n"
+        fig.text(0.06, 0.95, "Blue = collar, green = keeper, tan = handle plate, light gray = angle clip, dark gray = trigger, near-black = HDPE scales, black = bolts, red = up-stop spacer.\n"
                  "Nozzle sprays toward the +x direction (away from the handle).", fontsize=7, va="top")
         build()
         img, info = render(12, -75)
@@ -192,7 +194,7 @@ if __name__ == "__main__":
             ((0.0, TS, 0.42), "thumbscrew", (300, -90)),
             ((0.0, 0.0, 0.765), "button", (260, -150)),
             ((P[0], -0.2, P[1]), "pivot bolt", (-260, -160)),
-            ((S[0], -0.25, S[1]), "up-stop bolt", (-330, -60)),
+            ((S[0], -0.25, S[1]), "up-stop spacer", (-330, -60)),
             ((-1.0, -0.06, 1.2), "TRIGGER", (-200, -200)),
             ((-2.3, -0.06, -2.4), "TRIGGER bar + HDPE scales", (-420, 30)),
             ((-4.7, -0.1, -3.4), "GRIP: HDPE scales", (-220, 40))])
