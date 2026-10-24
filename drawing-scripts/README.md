@@ -2,8 +2,8 @@
 
 These scripts need Python 3 plus `pip install matplotlib shapely pypdf numpy`. Shapely must be 2.x.
 
-1. Run `python3 templates.py t.pdf prev.png` to make pages 1–6 (the 1:1 templates, the assembly side and top views, the keeper section, and the trigger motion and sections). It also writes preview PNGs.
-2. Run `python3 render3d.py templates.py iso.pdf` to make pages 7–8 (the 3D views and the angle clip close-up). It loads the part geometry from templates.py.
+1. Run `python3 templates.py t.pdf prev.png` to make pages 1–7 (the 1:1 templates, the assembly side and top views, the keeper section, the trigger motion and sections, and the open/closed checks). It also writes preview PNGs.
+2. Run `python3 render3d.py templates.py iso.pdf` to make pages 8–9 (the 3D views and the angle clip close-up). It loads the part geometry from templates.py.
 3. Merge the two into one PDF:
    `python3 -c "from pypdf import PdfWriter; w=PdfWriter(); [w.append(f) for f in ['t.pdf','iso.pdf']]; w.write('templates-vX.Y.pdf')"`
 

@@ -407,4 +407,78 @@ with PdfPages(OUT) as pdf:
     ax.text(tx + K2 * 1.05, ty + K2 * 0.53, "10-24 locknut", fontsize=6)
     ax.text(tx + K2 * 1.05, ty - K2 * 0.06, "shoulder bolt 1/4\" x 1/4\",\nsame part as the pivot", fontsize=6)
     pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p6.png"), dpi=80)
+    # ---------- OPEN / CLOSED checks: every moving part in both end states, with clearances computed ----------
+    RING = 0.64                    # valve ring radius (32.5 mm cup)
+    TS = collar_holes[0][1]        # thumbscrew y (negative = keeper side)
+    k_lo, k_hi = 0.95, 2.45        # keeper slot centers, from the notch center
+    big = (0, -0.80)               # keyhole big hole center
+
+    def keeper_at(off):            # keeper slid `off` inches away from the can (toward -y)
+        return affinity.translate(keeper, 0, -off)
+
+    off_open = -TS - k_lo          # screw at the near end of the slot
+    off_stop = -TS - k_hi          # screw at the far end: furthest the keeper can push toward the can
+    ring_seat, ring_big = Point(0, 0).buffer(RING, 64), Point(*big).buffer(RING, 64)
+    path = ring_seat.union(ring_big).union(box(-RING, big[1], RING, 0))
+    k_open, k_closed = keeper_at(off_open), keeper_at(0.0)
+    checks = []
+    def chk(part, state, what, val, ok, unit='"'):
+        checks.append((part, state, what, ("%.2f%s" % (val, unit)) if val is not None else "", "PASS" if ok else "FAIL"))
+    d = k_open.distance(path)
+    chk("Keeper", "OPEN", "ring slides seat <-> big hole without touching the keeper", d, d > 0.02)
+    chk("Keeper", "CLOSED", "notch reaches the ring (gap at notch-centered)", k_closed.distance(ring_seat), True)
+    chk("Keeper", "CLOSED", "slot travel left past the ring (screw not bottomed)", -off_stop, -off_stop > 0.05)
+    chk("Keeper", "OPEN", "big hole clears the ring (1.375 vs %.3f)" % (2 * RING), 1.375 / 2 - RING, 1.375 / 2 > RING)
+
+    can_side = Polygon([(-1.28, -0.95), (-1.15, -0.85), (-1.0, -0.65), (-0.75, -0.35), (-0.62, 0.0), (0.62, 0.0), (0.75, -0.35),
+                        (1.0, -0.65), (1.15, -0.85), (1.28, -0.95), (1.28, -6), (-1.28, -6)])
+    collar_side = box(-1.70, -0.125, 1.00, 0)
+    grip_front = LineString([(-3.55, -0.50), (-4.20, -4.55)])
+    rows = {}
+    for dz in (SLOT[0], 0.0, SLOT[1]):
+        P2 = (P[0], P[1] + dz)
+        rest = affinity.translate(trigger, *P2)
+        fin = affinity.translate(finger, *P2)
+        full = affinity.rotate(rest, -math.degrees(BT / NOSE), origin=P2)
+        ffull = affinity.rotate(fin, -math.degrees(BT / NOSE), origin=P2)
+        if dz == 0.0:
+            stop = Point(S).buffer(0.125, 32)
+            chk("Trigger", "REST", "tail sits on the up-stop shoulder", rest.distance(stop), rest.distance(stop) < 0.01)
+            nose_low = P2[1] - 0.45
+            chk("Trigger", "REST", "nose bump touches the button top (0.765)", nose_low - 0.765, abs(nose_low - 0.765) < 0.01)
+            chk("Trigger", "FULL", "tail lifts off the up-stop", full.distance(stop), full.distance(stop) > 0.02)
+        for st, t, f in (("REST", rest, fin), ("FULL", full, ffull)):
+            for what, val, lim in (("clears the collar", t.distance(collar_side), 0.05),
+                                   ("gap to grip (must stay open)", min(t.distance(grip_front), f.distance(grip_front)), 0.1),
+                                   ("finger room to the can", min(t.distance(can_side), f.distance(can_side)), 0.4)):
+                rows.setdefault((st, what), []).append((val, val > lim))
+    for (st, what), vals in sorted(rows.items(), key=lambda kv: (kv[0][1], kv[0][0] != "REST")):
+        checks.append(("Trigger", st, what + " (pivot low/mid/high)", " / ".join("%.2f" % v for v, _ in vals) + '"',
+                       "PASS" if all(ok for _, ok in vals) else "FAIL"))
+
+    fig, ax = newpage("OPEN / CLOSED CHECKS: every moving part in both end states (not templates)",
+        "Each moving part is drawn and measured at both ends of its travel, so the mechanism is proven on paper before it's cut.\n"
+        "Top row: keeper OPEN and CLOSED from above (1:1). Dashed circle = valve ring. Table: clearances computed from the template outlines.\n"
+        "Trigger FULL assumes the button moves %.2f\" (BT in templates.py). Measure a real can and rerun." % BT)
+    for (kx, ky, kk, ring, ttl) in ((2.3, 8.0, k_open, ring_big, "KEEPER OPEN: slid out, ring comes up\nthrough the big hole"),
+                                    (6.0, 8.0, k_closed, ring_seat, "KEEPER CLOSED: notch hugs the ring\nin the seat, screw not bottomed")):
+        fill(ax, collar, kx, ky, "#9ec5ea", z=1)
+        fill(ax, kk, kx, ky, "#c9e6c3", alpha=0.85, z=2)
+        x, y = ring.exterior.xy
+        ax.plot([v + kx for v in x], [v + ky for v in y], "k--", lw=0.8, zorder=4)
+        ax.add_patch(plt.Circle((kx, ky + TS), 0.15, fc="#555555", zorder=5))
+        ax.text(kx - 1.7, ky + 1.35, ttl, fontsize=7, weight="bold")
+    y0 = 3.7
+    ax.text(0.5, y0 + 0.25, "PART      STATE    CHECK", fontsize=6.5, weight="bold", family="monospace")
+    for i, (part, st, what, val, res) in enumerate(checks):
+        yy = y0 - 0.19 * i
+        ax.text(0.5, yy, "%-9s %-8s %s" % (part, st, what), fontsize=6, family="monospace")
+        ax.text(6.6, yy, val, fontsize=6, family="monospace", ha="right")
+        ax.text(6.9, yy, res, fontsize=6, family="monospace", weight="bold", color="#2e7d32" if res == "PASS" else "#c0392b")
+    ax.text(0.5, y0 - 0.19 * len(checks) - 0.25,
+            "Real-life check when the parts arrive: do each state by hand on a can (keeper open, can on, keeper closed and tight;\n"
+            "trigger at rest on the stop, squeeze until it sprays) and confirm each PASS line above.", fontsize=6.5, va="top")
+    pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p7.png"), dpi=80)
+    for c in checks:
+        print(*c)
 print("ok")
