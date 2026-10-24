@@ -10,6 +10,9 @@ g = {}; exec(src, g)
 collar, keeper, frame, trigger = g["collar"], g["keeper"], g["frame"], g["trigger"]
 P, S = g["P"], g["S"]
 trig = affinity.translate(trigger, *P)
+tsc = affinity.translate(g["trig_scale"], *P)
+gsc = g["grip_scale"]
+HD = g["HDPE"]
 TS = g["collar_holes"][0][1]   # thumbscrew y
 T = 0.125
 
@@ -66,6 +69,8 @@ def build(explode=0.0, show_can=True, show_trigger=True):
     extrude(collar, "xy", -T, 0, 10, COLORS["collar"])
     extrude(keeper, "xy", 0, T, 11, COLORS["keeper"])
     extrude(frame, "xz", 0.095, 0.22, 12, COLORS["frame"])
+    extrude(gsc, "xz", 0.22, 0.22 + HD, 18, (0.16, 0.16, 0.17))
+    extrude(gsc, "xz", 0.095 - HD, 0.095, 19, (0.16, 0.16, 0.17))
     dy, dz = 2.2 * e, 2.2 * e
     D7 = g["D7"]; H = g["hole"]
     flat = box(-1.80, 0.22, -0.70, 0.97).difference(H(-0.95, 0.60, D7)).difference(H(-1.45, 0.60, D7))
@@ -75,6 +80,8 @@ def build(explode=0.0, show_can=True, show_trigger=True):
     extrude(upr, "xz", 0.22, 0.345, 13, COLORS["clip"], off=(0, dy, dz))
     if show_trigger:
         extrude(trig, "xz", -0.0625, 0.0625, 14, COLORS["trigger"])
+        extrude(tsc, "xz", 0.0625, 0.0625 + HD, 16, (0.16, 0.16, 0.17))
+        extrude(tsc, "xz", -0.0625 - HD, -0.0625, 17, (0.16, 0.16, 0.17))
         # pivot shoulder bolt: head outboard, shoulder through trigger to the frame
         revolve([(0, -0.16), (0.22, -0.16), (0.22, -0.07), (0.125, -0.07), (0.125, 0.30), (0, 0.30)], 20, (0.22, 0.22, 0.22), n=24, axis="y", center=(P[0], 0, P[1]))
     # up-stop shoulder bolt: head outboard, 1/4" shoulder under the trigger tail, nut on the far side of the frame
@@ -175,7 +182,7 @@ if __name__ == "__main__":
     with PdfPages(out) as pdf:
         fig = plt.figure(figsize=(8.5, 11))
         fig.text(0.06, 0.965, "3D VIEWS: assembled on a can", fontsize=11, weight="bold")
-        fig.text(0.06, 0.95, "Blue = collar, green = keeper, tan = handle plate, light gray = angle clip, dark gray = trigger, black = bolts, red = up-stop bolt.\n"
+        fig.text(0.06, 0.95, "Blue = collar, green = keeper, tan = handle plate, light gray = angle clip, dark gray = trigger, near-black = HDPE scales, black = bolts, red = up-stop bolt.\n"
                  "Nozzle sprays toward the +x direction (away from the handle).", fontsize=7, va="top")
         build()
         img, info = render(12, -75)
@@ -187,8 +194,8 @@ if __name__ == "__main__":
             ((P[0], -0.2, P[1]), "pivot bolt", (-260, -160)),
             ((S[0], -0.25, S[1]), "up-stop bolt", (-330, -60)),
             ((-1.0, -0.06, 1.2), "TRIGGER", (-200, -200)),
-            ((-2.3, -0.06, -2.4), "TRIGGER bar, 4 finger divots", (-420, 30)),
-            ((-4.7, 0.1, -3.4), "HANDLE plate", (-220, 40))])
+            ((-2.3, -0.06, -2.4), "TRIGGER bar + HDPE scales", (-420, 30)),
+            ((-4.7, -0.1, -3.4), "GRIP: HDPE scales", (-220, 40))])
         img, info = render(22, 125)
         panel(fig, [0.03, 0.02, 0.94, 0.43], img, info, "From the back-left (angle clip side)", [
             ((-1.25, 0.97, 0.06), "ANGLE CLIP", (-330, 120)),
