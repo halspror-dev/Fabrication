@@ -62,7 +62,7 @@ for x, y in [(-1.05, 0.30), (-1.50, 0.30), (-4.23, -1.60), (-4.57, -3.90)]:
     frame = frame.difference(hole(x, y, D7))
 
 # ---- Trigger (pivot at origin, drawn as it sits on the can) ----
-# v0.4: full-hand bar with 4 finger divots, tail that rests on the up-stop, second "finger plate" spaced 3/8" outboard
+# v0.4: one flat plate, full-hand bar with 4 finger divots (Plasti Dip later), tail that rests on the up-stop
 NOSE = 1.50
 nose = box(0, -0.25, NOSE, 0.25).union(hole(NOSE, 0, 0.5))
 bump = hole(NOSE, -0.25, 0.40)
@@ -84,14 +84,6 @@ for i in range(4):
 trigger = nose.union(bump).union(boss).union(tail).union(neck).union(bar)
 trigger = trigger.difference(divots[0].union(divots[1]).union(divots[2]).union(divots[3]))
 trigger = trigger.buffer(-0.06, join_style=1).buffer(0.06, join_style=1)   # round every outside corner
-spacers = []
-for z in (-1.95, -3.60, -5.05):
-    t = (z - F0[1]) / uz
-    spacers.append((F0[0] + ux * t - nx * (W / 2 + 0.06), z))
-finger = trigger.intersection(box(-3, -6, 3, -1.40)).buffer(-0.06, join_style=1).buffer(0.06, join_style=1)
-for x, z in spacers:
-    trigger = trigger.difference(hole(x, z, D7))
-    finger = finger.difference(hole(x, z, D7))
 trigger = trigger.difference(hole(0, 0, DF))
 STOP_AT = (S[0] - P[0], S[1] - P[1])   # stop bolt in trigger coordinates (under the tail)
 
@@ -149,10 +141,6 @@ def page(pdf, items, scale_box=True):
     return fig
 
 
-def spacer_marks(ax, ox, oy):
-    for x, z in spacers:
-        ax.text(x + ox + 0.13, z + oy - 0.03, "S", fontsize=5)
-
 
 def can_axis(ax, ox, oy):
     ax.plot([ox - 0.15, ox + 0.15], [oy, oy], "r-", lw=0.4)
@@ -163,7 +151,6 @@ def pivot_mark(ax, ox, oy):
     ax.text(ox + 0.3, oy + 0.3, "pivot (F hole)", fontsize=5)
     ax.text(ox + 0.8, oy - 0.62, "nose bump\npresses button", fontsize=5)
     ax.text(ox - 1.5, oy + 0.32, "tail rests on\nthe up-stop", fontsize=5)
-    spacer_marks(ax, ox, oy)
 
 
 def frame_marks(ax, ox, oy):
@@ -181,14 +168,12 @@ with PdfPages(OUT) as pdf:
         (keeper, 2.0, 4.9, "KEEPER (qty 1)",
          "Notch 1.30 dia. Slot #7 wide.", [], None),
         (trigger, 6.0, 8.3, "TRIGGER (side view, qty 1)",
-         "Flat, no bends. Nose (right) presses button.\nPivot hole F (0.257). S = 3 spacer holes #7.", [], pivot_mark),
+         "Flat, no bends. Nose (right) presses button.\nPivot hole F (0.257). Plasti Dip the bar later.", [], pivot_mark),
     ])
     f1.savefig(PNG.replace(".png", "-p1.png"), dpi=80)
     f2 = page(pdf, [
         (frame, 6.0, 6.3, "FRAME / HANDLE (side view, qty 1)",
          "Forward is right. Clip holes #7 at z +0.30; grip-scale holes #7.", [], frame_marks),
-        (finger, 7.3, 6.5, "FINGER PLATE (qty 1)",
-         "Same divots as the trigger.\nS = 3 spacer holes #7.", [], spacer_marks),
         (clip_flat, 6.2, 9.1, "ANGLE CLIP (qty 1)",
          "Cut 1-1/10\" off 3/4\" x 3/4\" x 1/8\" aluminum ANGLE.\nWrap this template around it: dashed line = the corner.\n4 holes #7. Left = front (toward the can).", [], clip_marks),
     ])
@@ -235,9 +220,6 @@ with PdfPages(OUT) as pdf:
     fill(ax, box(-0.875, 0, 0.875, 0.125), ox, oy, "#c9e6c3", z=3)
     fill(ax, box(-1.80, 0, -0.70, 0.75), ox, oy, "none", ec="#555555", ls="--", z=4)
     fill(ax, trig_on, ox, oy, "#bfbfbf", z=5)
-    fill(ax, affinity.translate(finger, *P), ox, oy, "#d6d6d6", z=6)
-    for x, z in spacers:
-        ax.add_patch(plt.Circle((ox + P[0] + x, oy + P[1] + z), 0.17, fc="#555555", ec="k", lw=0.5, zorder=7))
     ax.add_patch(plt.Circle((ox + P[0], oy + P[1]), 0.19, fc="#555555", ec="k", lw=0.5, zorder=6))
     ax.add_patch(plt.Circle((ox + S[0], oy + S[1]), 0.19, fc="#555555", ec="k", lw=0.5, zorder=6))
     lab(ax, ox + 0.0, oy - 0.06, ox - 0.3, oy - 1.3, "COLLAR (edge-on)\nunder the valve ring")
@@ -248,7 +230,7 @@ with PdfPages(OUT) as pdf:
     lab(ax, ox - 1.0, oy + 0.6, ox - 0.4, oy + 1.9, "angle CLIP (far side, dashed)")
     lab(ax, ox + S[0], oy + S[1] + 0.19, ox - 4.6, oy + 2.3, "UP-STOP shoulder bolt: the trigger tail rests on it")
     lab(ax, ox - 4.7, oy - 2.6, ox - 6.0, oy - 1.4, "HANDLE / FRAME plate\n(grip, add scales later)")
-    lab(ax, ox - 2.5, oy - 2.2, ox - 2.1, oy - 4.3, "TRIGGER bar + FINGER PLATE (near side),\n3 spacer screws. Whole hand pulls\nit back = nose pushes button down")
+    lab(ax, ox - 2.5, oy - 2.2, ox - 2.1, oy - 4.3, "TRIGGER bar (one plate, 4 finger divots).\nWhole hand pulls it back\n= nose pushes button down")
     ax.text(0.5, 0.9, "Can drawn as a 65 mm (2-9/16\") Rust-Oleum can. Button 5/8\" above the valve ring.", fontsize=6.5)
     pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p3.png"), dpi=80)
 
@@ -265,10 +247,6 @@ with PdfPages(OUT) as pdf:
     fill(ax, box(frame.bounds[0], 0.095, -0.80, 0.22), ox, oy, "#f3d9b1", z=4)
     tb = trig_on.bounds
     fill(ax, box(tb[0], -0.0625, tb[2], 0.0625), ox, oy, "#bfbfbf", z=5)
-    fb = affinity.translate(finger, *P).bounds
-    fill(ax, box(fb[0], -0.5625, fb[2], -0.4375), ox, oy, "#d6d6d6", z=5)
-    for x, z in spacers:
-        fill(ax, box(P[0] + x - 0.125, -0.4375, P[0] + x + 0.125, -0.0625), ox, oy, "#999999", z=5)
     fill(ax, box(P[0] - 0.10, -0.20, P[0] + 0.10, 0.10), ox, oy, "#555555", z=6)
     fill(ax, box(S[0] - 0.10, -0.20, S[0] + 0.10, 0.10), ox, oy, "#555555", z=6)
     lab(ax, ox + 0.45, oy + 0.45, ox - 0.3, oy + 2.4, "valve ring sits in the keyhole SEAT\n(center of the can)")
@@ -277,17 +255,16 @@ with PdfPages(OUT) as pdf:
     lab(ax, ox - 1.2, oy + 0.8, ox - 2.6, oy + 1.9, "angle CLIP: bolts down into collar\nand sideways into handle plate")
     lab(ax, ox - 3.2, oy + 0.16, ox - 4.9, oy + 1.0, "HANDLE plate (on edge)")
     lab(ax, ox + 0.0, oy - 0.03, ox - 0.9, oy - 0.9, "TRIGGER nose (on edge,\non the can's centerline)")
-    lab(ax, ox - 2.6, oy - 0.5, ox - 5.4, oy - 1.0, "FINGER PLATE, 3/8\" spacers")
+    lab(ax, ox - 2.6, oy - 0.03, ox - 5.4, oy - 1.0, "TRIGGER (on edge, on the can's centerline)")
     lab(ax, ox + P[0], oy - 0.2, ox - 3.6, oy - 1.9, "pivot + up-stop shoulder bolts\nthrough the handle slots")
     steps = ("ASSEMBLY ORDER\n"
              "1. Collar on can: pull keeper back, drop collar over the valve ring at the big hole, slide it so the ring sits in the seat.\n"
              "2. Keeper: slide it toward the can until the notch hugs the ring, tighten the thumbscrew.\n"
              "3. Handle plate stands on edge, its notch over the back edge of the collar, just left of the centerline.\n"
              "4. Angle clip on the left side of the handle plate: 2 bolts down through clip + collar, 2 bolts sideways through clip + handle.\n"
-             "5. Bolt the finger plate to the trigger: 3 screws, a 3/8\" spacer on each, locknuts.\n"
-             "6. Trigger on the right side of the handle (on the centerline): shoulder bolt through trigger, nylon washer, handle slot, nut.\n"
-             "7. Up-stop: second shoulder bolt through the up-stop slot from the trigger side, nut on the far side, under the trigger tail.\n"
-             "8. Turn the button so the nozzle points forward. Slide the pivot until the nose just touches the button, tighten.\n"
+             "5. Trigger on the right side of the handle (on the centerline): shoulder bolt through trigger, nylon washer, handle slot, nut.\n"
+             "6. Up-stop: second shoulder bolt through the up-stop slot from the trigger side, nut on the far side, under the trigger tail.\n"
+             "7. Turn the button so the nozzle points forward. Slide the pivot until the nose just touches the button, tighten.\n"
              "    Then slide the up-stop up under the tail until it touches, tighten. The trigger now can't flip up.\n"
              "For a first rough fit, any bolt works as the pivot and C-clamps can stand in for the angle clip.")
     ax.text(0.5, 1.0, steps, fontsize=6.5, va="bottom")
@@ -376,24 +353,17 @@ with PdfPages(OUT) as pdf:
     ax.text(0.5, 2.85, "Grip span (back of grip to trigger divots) is about 2-1/2\" at rest. 4 divots, 0.95\" apart, 0.12\" deep, R0.70.\n"
             "Plasti Dip later: mask the pivot hole, the nose bump and the tail where it touches the stop.", fontsize=6.5)
 
-    # Section A-A: through the trigger bar at a spacer, looking down (2x)
+    # Section A-A: through the trigger bar, looking down (2x)
     K2 = 2.0
     def rr(x0, y0, w, h, fc, ec="k", hatch=None):
         ax.add_patch(plt.Rectangle((x0, y0), w * K2, h * K2, fc=fc, ec=ec, lw=0.6, hatch=hatch, zorder=3))
-    sx, sy = 0.9, 0.55
-    ax.text(0.5, 2.45, "SECTION A-A through a spacer, looking down (2x size)", fontsize=8, weight="bold")
-    rr(sx + K2 * 0.255, sy - K2 * 0.04, 0.19, 0.92, "#777777")             # screw shank through all
-    rr(sx + K2 * 0.17, sy - K2 * 0.13, 0.36, 0.09, "#555555")             # button head (frame side)
-    rr(sx, sy, 0.70, 0.125, "#bfbfbf", hatch="////")                        # trigger plate (bar width 0.70)
-    rr(sx + K2 * 0.225, sy + K2 * 0.125, 0.25, 0.375, "#999999")           # spacer
-    rr(sx, sy + K2 * 0.5, 0.70, 0.125, "#d6d6d6", hatch="////")            # finger plate
-    rr(sx + K2 * 0.16, sy + K2 * 0.625, 0.38, 0.25, "#555555")             # locknut (outboard)
-    ax.text(sx + K2 * 0.80, sy + K2 * 0.70, "10-24 locknut", fontsize=6)
-    ax.text(sx + K2 * 0.80, sy + K2 * 0.53, "FINGER PLATE (outboard)", fontsize=6)
-    ax.text(sx + K2 * 0.80, sy + K2 * 0.28, "3/8\" long spacer, #10 x 1/4\" OD", fontsize=6)
-    ax.text(sx + K2 * 0.80, sy + K2 * 0.03, "TRIGGER plate (frame side)", fontsize=6)
-    ax.text(sx + K2 * 0.80, sy - K2 * 0.13, "10-24 x 1\" button-head screw", fontsize=6)
-    ax.text(sx + K2 * 0.80, sy - K2 * 0.25, "Fingers wrap the front edge of both plates:\n5/8\" wide overall.", fontsize=6)
+    sx, sy = 0.9, 1.2
+    ax.text(0.5, 2.45, "SECTION A-A through the trigger bar, looking down (2x size)", fontsize=8, weight="bold")
+    ax.add_patch(plt.Rectangle((sx - 0.06, sy - 0.06), 0.70 * K2 + 0.12, 0.125 * K2 + 0.12, fc="#e7c9d6", ec="#9c5b78", lw=0.6, zorder=2))
+    rr(sx, sy, 0.70, 0.125, "#bfbfbf", hatch="////")
+    ax.text(sx + K2 * 0.80, sy + K2 * 0.10, "TRIGGER plate, 1/8\" thick, 0.70\" front to back", fontsize=6)
+    ax.text(sx + K2 * 0.80, sy - K2 * 0.05, "Plasti Dip coat (later) rounds the edges", fontsize=6, color="#9c5b78")
+    ax.text(sx, sy - K2 * 0.30, "Fingers wrap the front edge. Break every edge with a file before dipping.", fontsize=6)
 
     # Up-stop stack, looking down (2x)
     tx, ty = 5.3, 0.7
@@ -440,19 +410,17 @@ with PdfPages(OUT) as pdf:
     for dz in (SLOT[0], 0.0, SLOT[1]):
         P2 = (P[0], P[1] + dz)
         rest = affinity.translate(trigger, *P2)
-        fin = affinity.translate(finger, *P2)
         full = affinity.rotate(rest, -math.degrees(BT / NOSE), origin=P2)
-        ffull = affinity.rotate(fin, -math.degrees(BT / NOSE), origin=P2)
         if dz == 0.0:
             stop = Point(S).buffer(0.125, 32)
             chk("Trigger", "REST", "tail sits on the up-stop shoulder", rest.distance(stop), rest.distance(stop) < 0.01)
             nose_low = P2[1] - 0.45
             chk("Trigger", "REST", "nose bump touches the button top (0.765)", nose_low - 0.765, abs(nose_low - 0.765) < 0.01)
             chk("Trigger", "FULL", "tail lifts off the up-stop", full.distance(stop), full.distance(stop) > 0.02)
-        for st, t, f in (("REST", rest, fin), ("FULL", full, ffull)):
+        for st, t in (("REST", rest), ("FULL", full)):
             for what, val, lim in (("clears the collar", t.distance(collar_side), 0.05),
-                                   ("gap to grip (must stay open)", min(t.distance(grip_front), f.distance(grip_front)), 0.1),
-                                   ("finger room to the can", min(t.distance(can_side), f.distance(can_side)), 0.4)):
+                                   ("gap to grip (must stay open)", t.distance(grip_front), 0.1),
+                                   ("finger room to the can", t.distance(can_side), 0.4)):
                 rows.setdefault((st, what), []).append((val, val > lim))
     for (st, what), vals in sorted(rows.items(), key=lambda kv: (kv[0][1], kv[0][0] != "REST")):
         checks.append(("Trigger", st, what + " (pivot low/mid/high)", " / ".join("%.2f" % v for v, _ in vals) + '"',

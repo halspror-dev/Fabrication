@@ -10,8 +10,6 @@ g = {}; exec(src, g)
 collar, keeper, frame, trigger = g["collar"], g["keeper"], g["frame"], g["trigger"]
 P, S = g["P"], g["S"]
 trig = affinity.translate(trigger, *P)
-fing = affinity.translate(g["finger"], *P)
-spacers = [(x + P[0], z + P[1]) for x, z in g["spacers"]]
 TS = g["collar_holes"][0][1]   # thumbscrew y
 T = 0.125
 
@@ -77,11 +75,6 @@ def build(explode=0.0, show_can=True, show_trigger=True):
     extrude(upr, "xz", 0.22, 0.345, 13, COLORS["clip"], off=(0, dy, dz))
     if show_trigger:
         extrude(trig, "xz", -0.0625, 0.0625, 14, COLORS["trigger"])
-        extrude(fing, "xz", -0.5625, -0.4375, 15, COLORS["trigger"])
-        for x, z in spacers:   # 10-24 button-head screw from the frame side, 3/8" spacer, locknut outboard
-            revolve([(0, 0.0625), (0.18, 0.0625), (0.18, 0.15), (0, 0.15)], 16, (0.22, 0.22, 0.22), n=24, axis="y", center=(x, 0, z))
-            revolve([(0, -0.4375), (0.125, -0.4375), (0.125, -0.0625), (0, -0.0625)], 17, (0.62, 0.62, 0.62), n=24, axis="y", center=(x, 0, z))
-            revolve([(0, -0.84), (0.19, -0.84), (0.19, -0.5625), (0, -0.5625)], 16, (0.22, 0.22, 0.22), n=6, axis="y", center=(x, 0, z))
         # pivot shoulder bolt: head outboard, shoulder through trigger to the frame
         revolve([(0, -0.16), (0.22, -0.16), (0.22, -0.07), (0.125, -0.07), (0.125, 0.30), (0, 0.30)], 20, (0.22, 0.22, 0.22), n=24, axis="y", center=(P[0], 0, P[1]))
     # up-stop shoulder bolt: head outboard, 1/4" shoulder under the trigger tail, nut on the far side of the frame
@@ -90,8 +83,8 @@ def build(explode=0.0, show_can=True, show_trigger=True):
     revolve([(0, 0.22), (0.19, 0.22), (0.19, 0.36), (0, 0.36)], 26, (0.22, 0.22, 0.22), n=6, axis="y", center=(S[0], 0, S[1]))
     # keeper thumbscrew: knurled head, washer, shank, nut under collar
     revolve([(0, -0.36), (0.095, -0.36), (0.095, 0.125), (0.22, 0.125), (0.22, 0.17), (0.30, 0.17), (0.30, 0.42), (0, 0.42)],
-            30, (0.30, 0.30, 0.30), n=32, center=(0, -TS, 0))
-    revolve([(0, -0.30), (0.19, -0.30), (0.19, -0.125), (0, -0.125)], 31, (0.22, 0.22, 0.22), n=6, center=(0, -TS, 0))
+            30, (0.30, 0.30, 0.30), n=32, center=(0, TS, 0))
+    revolve([(0, -0.30), (0.19, -0.30), (0.19, -0.125), (0, -0.125)], 31, (0.22, 0.22, 0.22), n=6, center=(0, TS, 0))
     pid = 21
     for x in (-0.95, -1.45):
         z0 = -0.30 + 6.5 * e
@@ -182,19 +175,19 @@ if __name__ == "__main__":
     with PdfPages(out) as pdf:
         fig = plt.figure(figsize=(8.5, 11))
         fig.text(0.06, 0.965, "3D VIEWS: assembled on a can", fontsize=11, weight="bold")
-        fig.text(0.06, 0.95, "Blue = collar, green = keeper, tan = handle plate, light gray = angle clip, dark gray = trigger + finger plate, black = bolts, red = up-stop bolt.\n"
+        fig.text(0.06, 0.95, "Blue = collar, green = keeper, tan = handle plate, light gray = angle clip, dark gray = trigger, black = bolts, red = up-stop bolt.\n"
                  "Nozzle sprays toward the +x direction (away from the handle).", fontsize=7, va="top")
         build()
         img, info = render(12, -75)
         panel(fig, [0.03, 0.465, 0.94, 0.43], img, info, "From the front-right (trigger side)", [
             ((0.95, -0.4, -0.06), "COLLAR (under the valve ring)", (150, 170)),
             ((0.6, -1.9, 0.125), "KEEPER", (260, 60)),
-            ((0.0, -TS, 0.42), "thumbscrew", (300, -90)),
+            ((0.0, TS, 0.42), "thumbscrew", (300, -90)),
             ((0.0, 0.0, 0.765), "button", (260, -150)),
             ((P[0], -0.2, P[1]), "pivot bolt", (-260, -160)),
             ((S[0], -0.25, S[1]), "up-stop bolt", (-330, -60)),
             ((-1.0, -0.06, 1.2), "TRIGGER", (-200, -200)),
-            ((-2.3, -0.56, -2.4), "FINGER PLATE + spacers", (-420, 30)),
+            ((-2.3, -0.06, -2.4), "TRIGGER bar, 4 finger divots", (-420, 30)),
             ((-4.7, 0.1, -3.4), "HANDLE plate", (-220, 40))])
         img, info = render(22, 125)
         panel(fig, [0.03, 0.02, 0.94, 0.43], img, info, "From the back-left (angle clip side)", [
