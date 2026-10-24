@@ -39,7 +39,8 @@ for x, y, d in collar_holes:
 
 # ---- Keeper (notched edge at y=0) ----
 keeper = rounded_rect(-0.875, 0, 0.875, 2.75, 0.19)
-keeper = keeper.difference(hole(0, 0, 1.30)).difference(slot(0, 0.95, 0, 2.45, D7))
+# v0.4: slot shortened (was 0.95..2.45): opens just enough to clear the ring, 0.15" extra push when locked
+keeper = keeper.difference(hole(0, 0, 1.30)).difference(slot(0, 1.10, 0, 2.35, D7))
 
 collar = affinity.scale(collar, 1, -1, origin=(0, 0))
 keeper = affinity.scale(keeper, 1, -1, origin=(0, 0))
@@ -312,7 +313,7 @@ with PdfPages(OUT) as pdf:
         # collar section at x=0: keyhole spans y -1.4875..+0.5625
         r(ax, -2.80, -0.125, -1.4875, 0, ox, oy, "#9ec5ea")
         r(ax, 0.5625, -0.125, 1.00, 0, ox, oy, "#9ec5ea")
-        # keeper section: material from notch edge (-0.65) to -2.75, slot gap -0.85..-2.55 (centers 0.95..2.45)
+        # keeper section: material from notch edge (-0.65) to -2.75, slot gap -1.00..-2.45 (centers 1.10..2.35)
         k0 = shift
         r(ax, -2.75 + k0, 0, -0.65 + k0, 0.125, ox, oy, "#c9e6c3")
         # thumbscrew at y=-2.20 (v0.4): shank, knurled head, washer, nut under collar
@@ -333,8 +334,8 @@ with PdfPages(OUT) as pdf:
     lab(ax, ox + K * -2.39, oy - K * 0.22, ox + K * -4.4, oy - K * 0.75, "10-24 nut glued\nunder the collar")
     lab(ax, ox + K * 0.25, oy + K * 0.6, ox + K * 0.7, oy + K * 1.05, "button")
 
-    ox, oy = panel(5.6, 3.9, -1.25, "OPEN (putting it on / taking it off)")
-    lab(ax, ox + K * -2.6, oy + K * 0.12, ox + K * -1.3, oy + K * 0.95, "keeper slid 1-1/4\" away from the can:\nthe keyhole is open so the ring can pass")
+    ox, oy = panel(5.6, 3.9, -1.10, "OPEN (putting it on / taking it off)")
+    lab(ax, ox + K * -2.6, oy + K * 0.12, ox + K * -1.3, oy + K * 0.95, "keeper slid 1.10\" away from the can:\nthe keyhole is open so the ring can pass")
     ax.annotate("", (ox + K * -2.4, oy + K * -0.45), (ox + K * -1.2, oy + K * -0.45), arrowprops=dict(arrowstyle="->", lw=0.7))
     ax.text(ox + K * -2.3, oy + K * -0.62, "slide", fontsize=6)
     ax.text(0.5, 0.9,
@@ -345,7 +346,8 @@ with PdfPages(OUT) as pdf:
         "3. Slide the keeper back toward the can until its curved notch touches the ring. Tighten the thumbscrew.\n"
         "    The ring is now trapped: collar underneath, keeper notch on the open side. It can't slide or twist.\n"
         "The keeper only moves sideways along its slot. The thumbscrew never comes out, it just loosens so the keeper can slide.\n"
-        "v0.4: the thumbscrew hole is 1/4\" closer to the can, so the slot no longer bottoms out on the screw before the notch is tight.",
+        "v0.4: thumbscrew hole 1/4\" closer to the can and a shorter slot: it opens just enough to clear the ring,\n"
+        "and when locked the screw still has 0.15\" of slot left, so it can't bottom out before the notch is tight.",
         fontsize=7, va="bottom")
     pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p5.png"), dpi=80)
     # ---------- Trigger motion + sections (moving parts) ----------
@@ -410,7 +412,7 @@ with PdfPages(OUT) as pdf:
     # ---------- OPEN / CLOSED checks: every moving part in both end states, with clearances computed ----------
     RING = 0.64                    # valve ring radius (32.5 mm cup)
     TS = collar_holes[0][1]        # thumbscrew y (negative = keeper side)
-    k_lo, k_hi = 0.95, 2.45        # keeper slot centers, from the notch center
+    k_lo, k_hi = 1.10, 2.35        # keeper slot centers, from the notch center
     big = (0, -0.80)               # keyhole big hole center
 
     def keeper_at(off):            # keeper slid `off` inches away from the can (toward -y)
