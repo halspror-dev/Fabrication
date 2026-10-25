@@ -61,9 +61,9 @@ FY0, FY1 = g["FY0"], g["FY1"]   # handle plate faces
 # ---------- hardware catalog (nominal catalog dimensions, inches) ----------
 # num: (name, source, qty per handle, where)
 HW = {
-    1: ("Shoulder bolt 1/4\" x 1/4\", 10-24", "Bolt Depot #14221", 1, "trigger pivot"),
+    1: ("Clevis pin 1/4\" x 1/2\", stainless", "Rivetsonline CLPF-0250-0500", 1, "trigger pivot, in a handle-plate lobe"),
     2: ("Nylon washer 1/4\" (0.265 x 0.625 x 0.060)", "Bolt Depot #15939", 1, "pivot, between trigger and handle"),
-    3: ("Nylon-insert locknut 10-24", "Bolt Depot #2552", 2, "pivot, up-stop"),
+    3: ("Nylon-insert locknut 10-24", "Bolt Depot #2552", 1, "up-stop"),
     4: ("Button-head screw 10-24 x 5/8\"", "Bolt Depot #4396", 1, "up-stop"),
     5: ("Hitch pin clip, stainless, 0.080\" wire", "Bolt Depot #27207", 2, "snaps through each handle tab, under the collar"),
     6: ("Nylon spacer 5 mm ID x 10 mm OD x 5 mm", "Bolt Depot #13775", 1, "up-stop, under the trigger tail"),
@@ -74,6 +74,8 @@ HW = {
     11: ("Screw post, screw half", "MyBinding SO058ASP", 4, "scales (head on the inside)"),
     12: ("Screw post, barrel half, 3/16\" x 1/4\"", "MyBinding SO014ASP", 2, "keeper guides (head under the collar)"),
     13: ("Screw post, screw half (1/4\" post)", "MyBinding SO014ASP", 2, "keeper guides (head on the keeper)"),
+    14: ("Hitch pin clip, stainless, 0.080\" wire", "Bolt Depot #27207", 1, "through the pivot pin, outside the handle"),
+    15: ("Nylon shim washer 1/32\" (0.031)", "TBD", 3, "under the pivot pin head; on the keeper under each post head"),
 }
 INST = []    # (pid, hw number, joint name, anchor point)
 
@@ -165,6 +167,26 @@ def hw_clevis(x, y, z_face, pid):
     rev("z", x, y, 0, [(0, z_face), (0.125, z_face), (0.125, z_face - 0.48), (0.10, z_face - 0.50), (0, z_face - 0.50)], pid, STEEL)
 
 
+def hw_clevis_y(x, z, y_face, pid):
+    """1/4" clevis pin along +y: 3/8 x 1/16 head behind y_face, 1/2" of shank in +y (cross hole 0.35 out)."""
+    rev("y", x, 0, z, [(0, y_face - 0.06), (0.18, y_face - 0.06), (0.19, y_face - 0.04), (0.19, y_face), (0, y_face)], pid, STEEL)
+    rev("y", x, 0, z, [(0, y_face), (0.125, y_face), (0.125, y_face + 0.48), (0.10, y_face + 0.50), (0, y_face + 0.50)], pid, STEEL)
+
+
+def hw_rclip_y(x, y, z, pid):
+    """Hitch pin clip on a pin along y: straight leg along x through the cross hole at (y, z), bend behind, wavy leg
+    hanging below the pin (toward -z), all in the x-z plane."""
+    r, rad, xb = 0.04, 0.085, x - 0.30
+    rev("x", 0, y, z, [(0, xb), (r, xb), (r, xb + 0.80), (0, xb + 0.80)], pid, STEEL, n=10)
+    for k in range(9):
+        a = -math.pi / 2 + k * math.pi / 8
+        xx, zz = xb - rad * math.cos(a), z - rad + rad * math.sin(a)
+        rev("x", 0, y, zz, [(0, xx - 0.015), (r, xx - 0.015), (r, xx + 0.015), (0, xx + 0.015)], pid, STEEL, n=8)
+    for k, (x0, x1) in enumerate(((0.0, 0.18), (0.18, 0.34), (0.34, 0.62))):
+        dz = 0.04 if k == 1 else 0.0
+        rev("x", 0, y, z - 2 * rad + dz, [(0, xb + x0), (r, xb + x0), (r, xb + x1), (0, xb + x1)], pid, STEEL, n=8)
+
+
 def hw_rclip_flat(x, y, z, s, pid):
     """Hitch pin clip lying flat (clip plane x-y) around a vertical pin at (x, y): straight leg along x through the pin's
     cross hole at height z, bend behind the pin, wavy leg back along the pin's side (toward -y)."""
@@ -230,10 +252,13 @@ def build(explode=0.0, show_can=True, show_trigger=True, show_hw=True):
     px, pz = P
     sx, sz = S
     if show_trigger:
-        # pivot: head on the trigger side, shoulder through trigger + nylon washer, bears on the handle plate; locknut on the clip side
-        add(1, "pivot", (px, FY0 - 0.25 - 0.188, pz), lambda p, ox, oy, oz: hw_shoulder("y", px + ox, 0, pz + oz, FY0 - 0.25 + oy, 1, p), O(dy=-2.3))
+        # v0.94 pivot: clevis pin from the trigger side (1/32 nylon shim under its head), through trigger + nylon washer +
+        # a handle-plate lobe; hitch clip through its cross hole just outside the plate. Stack 0.341 of the pin's 0.350.
+        yh = TY0 - 0.031
+        add(15, "pivot", (px, yh + 0.015, pz + 0.22), lambda p, ox, oy, oz: hw_washer("y", px + ox, 0, pz + oz, yh + oy, 1, p, 0.1325, 0.25, 0.031, NYLON), O(dy=-1.8))
+        add(1, "pivot", (px, yh - 0.06, pz), lambda p, ox, oy, oz: hw_clevis_y(px + ox, pz + oz, yh + oy, p), O(dy=-2.3))
         add(2, "pivot", (px, TY1 + 0.03, pz + 0.30), lambda p, ox, oy, oz: hw_washer("y", px + ox, 0, pz + oz, TY1 + oy, 1, p, 0.1325, 0.3125, 0.060, NYLON), O(dy=-0.65))
-    add(3, "pivot", (px, FY1 + 0.236, pz), lambda p, ox, oy, oz: hw_locknut("y", px + ox, 0, pz + oz, FY1 + oy, 1, p), O(dy=0.75))
+        add(14, "pivot", (px + 0.4, yh + 0.40, pz), lambda p, ox, oy, oz: hw_rclip_y(px + ox, yh + 0.40 + oy, pz + oz, p), O(dy=0.9))
     # up-stop: button screw from the trigger side through the spacer and the handle plate, washer + locknut on the clip side
     add(4, "up-stop", (sx, FY0 - 0.197 - 0.105, sz), lambda p, ox, oy, oz: hw_button("y", sx + ox, 0, sz + oz, FY0 - 0.197 + oy, 1, p), O(dy=-2.3))
     add(6, "up-stop", (sx, FY0 - 0.1, sz + SR), lambda p, ox, oy, oz: hw_spacer("y", sx + ox, 0, sz + oz, FY0 - 0.197 + oy, 1, p), O(dy=-0.7))
@@ -247,9 +272,10 @@ def build(explode=0.0, show_can=True, show_trigger=True, show_hw=True):
         gy = -gy
         add(12, "keeper guide", (gx, gy, -CT - 0.06), lambda p, ox, oy, oz, gx=gx, gy=gy: hw_post_barrel("z", gx + ox, gy + oy, 0, -CT + oz, 1, p, L=0.25), O(dz=-1.45))
         add(13, "keeper guide", (gx, gy, 0.22), lambda p, ox, oy, oz, gx=gx, gy=gy: hw_post_screw("z", gx + ox, gy + oy, 0, -CT + 0.25 + oz, -1, p), O(dz=1.0))
+        add(15, "keeper guide", (gx + 0.15, gy, 0.14), lambda p, ox, oy, oz, gx=gx, gy=gy: hw_washer("z", gx + ox, gy + oy, 0, 0.125 + oz, 1, p, 0.10, 0.20, 0.031, NYLON), O(dz=0.75))
     # handle tabs: a hitch pin clip through each tab under the collar, bend on the outside (+y), wavy leg under the tab bottom
-    for x0, x1 in g["TABS"]:
-        x, z, zb = (x0 + x1) / 2, g["PIN_Z"], g["TAB_BOT"] - 0.045
+    for (x0, x1), z in zip(g["TABS"], g["PIN_ZS"]):
+        x, zb = (x0 + x1) / 2, g["TAB_BOT"] - 0.045
         add(5, "tab pin", (x, FY1 + 0.10, z), lambda p, ox, oy, oz, x=x, z=z, zb=zb: hw_rclip(x + ox, z + oz, zb + oz, FY1 + 0.12 + oy, -1, p), O(dy=1.3))
     # scales: barrel half from outside, screw half from inside
     if show_trigger:
@@ -382,7 +408,7 @@ if __name__ == "__main__":
     with PdfPages(out) as pdf:
         fig = plt.figure(figsize=(8.5, 11))
         fig.text(0.06, 0.965, "3D VIEWS: assembled on a can", fontsize=11, weight="bold")
-        fig.text(0.06, 0.95, "Blue = collar, green = keeper, tan = handle plate (2 tabs through the collar), dark gray = trigger, near-black = HDPE scales.\n"
+        fig.text(0.06, 0.95, "Blue = collar, green = keeper, tan = handle plate (2 tabs through the collar), dark gray = trigger, near-black = printed PETG scales.\n"
                  "Hardware: steel = stainless bolts, nuts and hitch pin clips, white = nylon washer, black = nylon spacer, silver = aluminum screw posts.\n"
                  "Red balloons = hardware number (list at the bottom, and the exploded views on the next pages).", fontsize=7, va="top")
         build()
@@ -427,7 +453,7 @@ if __name__ == "__main__":
         fig.text(0.06, 0.965, "KEEPER LOCK CLOSE-UP (can, handle and trigger hidden)", fontsize=11, weight="bold")
         fig.text(0.06, 0.95, "No thumbscrew. The keeper slides on 2 short screw posts (12 + 13) that sit in 2 slots, staggered 0.50\" along the slide, so it\n"
                  "can only move straight in and out; it can't spin, and it stays on the collar with the pin out. To lock, a stainless clevis pin (8)\n"
-                 "drops through the keeper and the collar, and a hitch pin clip (9) pushes through the pin under the collar. Top: from above. Bottom: from below.", fontsize=7, va="top")
+                 "drops through the keeper and the collar, and a hitch pin clip (9) pushes through the pin under the collar.\nv0.94: a 1/32\" nylon shim (15) under each post head takes up the keeper's up-and-down play. Top: from above. Bottom: from below.", fontsize=7, va="top")
         for k, (ex, el, az, cap) in enumerate(((0.0, 32, -60, "Assembled, from above (keeper locked on a seat can)"),
                                                  (0.6, -25, -60, "Pulled apart, from below: posts and pin up/down, clip out"))):
             build(explode=ex, show_can=False, show_trigger=False)

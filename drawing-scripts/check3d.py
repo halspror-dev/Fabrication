@@ -131,7 +131,7 @@ def page(res, pdf_name):
     fig = plt.figure(figsize=(8.5, 11))
     fig.text(0.06, 0.965, "REAL-SHAPE 3D CLEARANCE CHECK: every part against every other part (not a template)", fontsize=11, weight="bold")
     fig.text(0.06, 0.95,
-             "The 3D model on the next pages (plates, HDPE scales, the can, every bolt, nut, washer, pin and clip at catalog size) is sampled about\n"
+             "The 3D model on the next pages (plates, printed scales, the can, every bolt, nut, washer, pin and clip at catalog size) is sampled about\n"
              "every %.3f\" over its real surfaces, and the gap between each pair of parts is measured in 5 states. Parts meant to touch (a bolt in its\n"
              "hole, a scale on its plate, the tabs in their slots, the nose on the button) are counted as BY DESIGN. Every other pair must keep %.2f\"\n"
              "or more. Listed: the closest pairs that are NOT meant to touch, in each state. Hardware sizes are nominal catalog sizes; the can is\n"
