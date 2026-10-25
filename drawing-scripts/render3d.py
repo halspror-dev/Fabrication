@@ -54,18 +54,17 @@ COLORS = dict(collar=(0.55, 0.74, 0.92), keeper=(0.62, 0.84, 0.58), frame=(0.93,
               clip=(0.70, 0.70, 0.72), trigger=(0.45, 0.45, 0.48), can=(0.86, 0.86, 0.86), ring=(0.75, 0.75, 0.75), button=(0.98, 0.98, 0.98))
 STEEL, DARK, NYLON, BLACKNY, ALUM = (0.66, 0.67, 0.70), (0.18, 0.18, 0.20), (0.95, 0.94, 0.88), (0.16, 0.16, 0.17), (0.82, 0.82, 0.85)
 CT, TY0, TY1 = g["CT"], g["TY0"], g["TY1"]
-CLIP_Y, SIDE_Z, SR = g["CLIP_Y"], g["SIDE_Z"], g["STOP_R"]
-FY0, FY1 = 0.095, 0.22          # handle plate faces
-UY1 = 0.345                     # clip upright leg, outer face (inner face = FY1)
+SR = g["STOP_R"]
+FY0, FY1 = g["FY0"], g["FY1"]   # handle plate faces
 
 # ---------- hardware catalog (nominal catalog dimensions, inches) ----------
 # num: (name, source, qty per handle, where)
 HW = {
     1: ("Shoulder bolt 1/4\" x 1/4\", 10-24", "Bolt Depot #14221", 1, "trigger pivot"),
     2: ("Nylon washer 1/4\" (0.265 x 0.625 x 0.060)", "Bolt Depot #15939", 1, "pivot, between trigger and handle"),
-    3: ("Nylon-insert locknut 10-24", "Bolt Depot #2552", 6, "pivot, up-stop, 4 clip bolts"),
-    4: ("Button-head screw 10-24 x 5/8\"", "Bolt Depot #4396", 3, "2 clip-to-collar, 1 up-stop"),
-    5: ("Flat-head socket screw 10-24 x 5/8\" (82 deg)", "Bolt Depot #4467", 2, "clip-to-handle, flush on trigger side"),
+    3: ("Nylon-insert locknut 10-24", "Bolt Depot #2552", 2, "pivot, up-stop"),
+    4: ("Button-head screw 10-24 x 5/8\"", "Bolt Depot #4396", 1, "up-stop"),
+    5: ("Cotter pin 3/32\" x 1/2\", stainless", "Bolt Depot (look up)", 2, "through each handle tab, under the collar"),
     6: ("Nylon spacer 5 mm ID x 10 mm OD x 5 mm", "Bolt Depot #13775", 1, "up-stop, under the trigger tail"),
     7: ("#10 flat washer", "Bolt Depot #2946", 2, "up-stop nut, thumbscrew"),
     8: ("Spade thumbscrew 10-24 x 1/2\"", "Bolt Depot #24038", 1, "keeper lock"),
@@ -155,6 +154,15 @@ def hw_post_screw(axis, x, y, z, a_face, s, pid):
     shank(axis, x, y, z, a_face, a_face + s * 0.25, pid, r=0.07)
 
 
+def hw_cotter(x, z, y_eye, s, pid):
+    """Cotter pin along y: eye loop at y_eye, doubled legs (drawn as one 3/32 rod) run 0.5 in +s, ends bent apart."""
+    rev("z", x, y_eye, 0, [(0.028, z - 0.024), (0.07, z - 0.024), (0.07, z + 0.024), (0.028, z + 0.024), (0.028, z - 0.024)], pid, STEEL, n=20)
+    rev("y", x, 0, z, [(0, y_eye + s * 0.06), (0.045, y_eye + s * 0.06), (0.045, y_eye + s * 0.50), (0, y_eye + s * 0.50)], pid, STEEL, n=14)
+    for dz in (-1, 1):
+        a = y_eye + s * 0.50
+        rev("y", x, 0, z + dz * 0.045, [(0, a), (0.022, a), (0.022, a + s * 0.12), (0, a + s * 0.12)], pid, STEEL, n=10)
+
+
 def hw_spacer(axis, x, y, z, a_face, s, pid):
     rev(axis, x, y, z, [(0.098, a_face), (SR, a_face), (SR, a_face + s * 0.197), (0.098, a_face + s * 0.197), (0.098, a_face)], pid, BLACKNY)
 
@@ -185,12 +193,6 @@ def build(explode=0.0, show_can=True, show_trigger=True, show_hw=True):
     extrude(frame, "xz", FY0, FY1, 12, COLORS["frame"])
     extrude(gsc, "xz", FY1, FY1 + HD, 18, (0.16, 0.16, 0.17), off=OFF["gsc_out"])
     extrude(gsc, "xz", FY0 - HD, FY0, 19, (0.16, 0.16, 0.17), off=OFF["gsc_in"])
-    D7 = g["D7"]; H = g["hole"]
-    flat = box(-1.80, FY1, -0.70, 0.97).difference(H(-0.95, CLIP_Y, D7)).difference(H(-1.45, CLIP_Y, D7))
-    upr = box(-1.80, 0.0, -0.70, 0.75).difference(H(-1.05, SIDE_Z, D7)).difference(H(-1.50, SIDE_Z, D7))
-    flat = flat.difference(box(-1.81, FY1 - 0.01, -0.69, UY1))  # corner belongs to the upright leg
-    extrude(flat, "xy", 0, 0.125, 13, COLORS["clip"], off=OFF["clip"])
-    extrude(upr, "xz", FY1, UY1, 13, COLORS["clip"], off=OFF["clip"])
     if show_trigger:
         extrude(trig, "xz", TY0, TY1, 14, COLORS["trigger"], off=OFF["trigger"])
         extrude(tsc, "xz", TY1, TY1 + HD, 16, (0.16, 0.16, 0.17), off=OFF["tsc_in"])
@@ -219,14 +221,10 @@ def build(explode=0.0, show_can=True, show_trigger=True, show_hw=True):
     add(8, "keeper lock", (0, TS, 0.125 + 0.049 + 0.44), lambda p, ox, oy, oz: hw_thumb(ox, TS + oy, 0.125 + 0.049 + oz, p), O(dz=1.25))
     add(7, "keeper lock", (0.25, TS, 0.15), lambda p, ox, oy, oz: hw_washer("z", ox, TS + oy, 0, 0.125 + oz, 1, p, 0.1095, 0.25, 0.049, STEEL), O(dz=0.8))
     add(9, "keeper lock", (0, TS, -CT - 0.125), lambda p, ox, oy, oz: hw_hexnut("z", ox, TS + oy, 0, -CT + oz, -1, p), O(dz=-1.45))
-    # angle clip to collar: button heads on the flat leg, locknuts under the collar
-    for x in (-0.95, -1.45):
-        add(4, "clip to collar", (x, CLIP_Y, 0.23), lambda p, ox, oy, oz, x=x: hw_button("z", x + ox, CLIP_Y + oy, 0, 0.125 + oz, -1, p), O(dy=0.75, dz=1.45))
-        add(3, "clip to collar", (x, CLIP_Y, -CT - 0.236), lambda p, ox, oy, oz, x=x: hw_locknut("z", x + ox, CLIP_Y + oy, 0, -CT + oz, -1, p), O(dz=-1.55))
-    # angle clip to handle plate: flat heads countersunk flush on the trigger side, locknuts on the clip side
-    for x in (-1.05, -1.50):
-        add(5, "clip to handle", (x, FY0, SIDE_Z), lambda p, ox, oy, oz, x=x: hw_flat("y", x + ox, 0, SIDE_Z + oz, FY0 + oy, 1, p), O(dy=-0.75))
-        add(3, "clip to handle", (x, UY1 + 0.236, SIDE_Z), lambda p, ox, oy, oz, x=x: hw_locknut("y", x + ox, 0, SIDE_Z + oz, UY1 + oy, 1, p), O(dy=1.45, dz=0.75))
+    # handle tabs: a cotter pin through each tab under the collar, eye on the outside (+y), legs bent apart on the trigger side
+    for x0, x1 in g["TABS"]:
+        x, z = (x0 + x1) / 2, g["PIN_Z"]
+        add(5, "tab pin", (x, FY1 + 0.10, z), lambda p, ox, oy, oz, x=x, z=z: hw_cotter(x + ox, z + oz, FY1 + 0.10 + oy, -1, p), O(dy=1.1))
     # scales: barrel half from outside, screw half from inside
     if show_trigger:
         for hx, hz in g["SCALE_HOLES"]:
@@ -312,7 +310,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages
     out = sys.argv[2]
-    def panel(fig, rect, img, info, cap, labels, balloons=True, min_px=200):
+    def panel(fig, rect, img, info, cap, labels, balloons=True, min_px=200, only=None):
         ax = fig.add_axes(rect); ax.imshow(img, interpolation="lanczos"); ax.axis("off")
         ax.set_title(cap, fontsize=8, weight="bold", loc="left")
         for p3, txt, (dx, dy) in labels:
@@ -325,6 +323,8 @@ if __name__ == "__main__":
             Hh, Ww = idb.shape
             used = []
             for p, num, joint, anchor in INST:
+                if only is not None and num not in only:
+                    continue
                 ys, xs = np.nonzero(idb == p)
                 if len(xs) < min_px:
                     continue
@@ -356,8 +356,8 @@ if __name__ == "__main__":
     with PdfPages(out) as pdf:
         fig = plt.figure(figsize=(8.5, 11))
         fig.text(0.06, 0.965, "3D VIEWS: assembled on a can", fontsize=11, weight="bold")
-        fig.text(0.06, 0.95, "Blue = collar, green = keeper, tan = handle plate, light gray = angle clip, dark gray = trigger, near-black = HDPE scales.\n"
-                 "Hardware: steel = stainless bolts and nuts, white = nylon washer, black = nylon spacer, silver = aluminum screw posts.\n"
+        fig.text(0.06, 0.95, "Blue = collar, green = keeper, tan = handle plate (2 tabs through the collar), dark gray = trigger, near-black = HDPE scales.\n"
+                 "Hardware: steel = stainless bolts, nuts and cotter pins, white = nylon washer, black = nylon spacer, silver = aluminum screw posts.\n"
                  "Red balloons = hardware number (list at the bottom, and the exploded views on the next pages).", fontsize=7, va="top")
         build()
         img, info = render(12, -75)
@@ -368,17 +368,17 @@ if __name__ == "__main__":
             ((-4.7, -0.1, -3.4), "GRIP", (-220, 40))], min_px=200)
         build()
         img, info = render(22, 125)
-        panel(fig, [0.03, 0.15, 0.94, 0.37], img, info, "From the back-left (angle clip side)", [
-            ((-1.25, 0.97, 0.06), "ANGLE CLIP", (-330, 120)),
+        panel(fig, [0.03, 0.15, 0.94, 0.37], img, info, "From the back-left (cotter pin side)", [
+            ((-0.95, 0.22, -0.2), "TABS + cotter pins", (-330, 120)),
             ((-3.0, 0.22, 0.0), "HANDLE plate", (300, 120))], min_px=200)
         legend(fig, 0.135)
         pdf.savefig(fig); fig.savefig(out.replace(".pdf", "-p1.png"), dpi=110)
 
-        for pg, (el, az, side) in enumerate(((16, -38, "trigger side"), (18, 142, "angle clip side"))):
+        for pg, (el, az, side) in enumerate(((16, -38, "trigger side"), (18, 142, "cotter pin side"))):
             fig = plt.figure(figsize=(8.5, 11))
             fig.text(0.06, 0.965, "EXPLODED VIEW, %s: every bolt, nut, washer and spacer (can hidden)" % side, fontsize=11, weight="bold")
             fig.text(0.06, 0.95, "Each part is pulled straight out along its own bolt line, so it lines up with the hole it goes in. The handle plate stays put.\n"
-                     "Trigger-side parts come out toward you on page 3, clip-side parts on page 4. Red balloon = hardware number in the list below.", fontsize=7, va="top")
+                     "Trigger-side parts come out toward you on one page, cotter-pin-side parts on the other. Red balloon = hardware number in the list below.", fontsize=7, va="top")
             build(explode=1.0, show_can=False)
             img, info = render(el, az, W=1600, H=1600, margin=0.03)
             panel(fig, [0.02, 0.24, 0.96, 0.69], img, info, "", [], min_px=400)
@@ -386,21 +386,14 @@ if __name__ == "__main__":
             pdf.savefig(fig); fig.savefig(out.replace(".pdf", "-p%d.png" % (3 + pg)), dpi=110)
 
         fig = plt.figure(figsize=(8.5, 11))
-        fig.text(0.06, 0.965, "ANGLE CLIP CLOSE-UP (can and trigger hidden)", fontsize=11, weight="bold")
-        fig.text(0.06, 0.95, "The clip is a 1-1/10\" piece of 3/4\" x 3/4\" x 1/8\" aluminum ANGLE.\n"
-                 "FLAT leg on the collar: 2 button-head screws (4) go DOWN through it and the collar, locknuts (3) underneath.\n"
-                 "UPRIGHT leg against the handle plate: 2 flat-head screws (5) come from the TRIGGER side, countersunk flush in the handle plate,\n"
-                 "locknuts (3) on the clip side. Flush heads are needed: the trigger swings 0.06\" from that face and would hit any head or nut.", fontsize=7, va="top")
-        build(show_can=False, show_trigger=False)
-        ids = [13] + [p for p, n, j, a in INST if j.startswith("clip")]
-        img, info = render(28, 115, fit_ids=ids, margin=0.10)
-        panel(fig, [0.03, 0.47, 0.94, 0.40], img, info, "Assembled", [
-            ((-1.0, 0.85, 0.125), "FLAT leg", (-450, 230)),
-            ((-1.25, 0.345, 0.65), "UPRIGHT leg", (-520, -260)),
-            ((0.4, 0.4, -0.06), "COLLAR", (-150, 260))])
-        build(explode=0.6, show_can=False, show_trigger=False)
-        ids = [13] + [p for p, n, j, a in INST if j.startswith("clip")]
-        img, info = render(28, 115, fit_ids=ids, margin=0.10)
-        panel(fig, [0.03, 0.05, 0.94, 0.40], img, info, "Pulled apart along the bolt lines", [])
+        fig.text(0.06, 0.965, "HANDLE TABS CLOSE-UP (can and trigger hidden, looking up from under the collar)", fontsize=11, weight="bold")
+        fig.text(0.06, 0.95, "No angle clip. The handle plate has 2 tabs that drop straight down through 2 slots in the collar.\n"
+                 "A 3/32\" cotter pin (5) goes through the small hole in each tab, just under the collar, and its legs get bent apart.\n"
+                 "The pins sit under the collar on the outside face, nowhere near the trigger. For big-hole cans, use the other 2 slots.", fontsize=7, va="top")
+        for k, (ex, cap) in enumerate(((0.0, "Assembled"), (0.6, "Pulled apart: collar down, pins out"))):
+            build(explode=ex, show_can=False, show_trigger=False)
+            ids = [p for p, n, j, a in INST if j == "tab pin"]
+            img, info = render(-22, 120, fit_ids=ids, margin=0.30)
+            panel(fig, [0.03, 0.47 - 0.42 * k, 0.94, 0.40], img, info, cap, [], min_px=200, only=(5,))
         pdf.savefig(fig); fig.savefig(out.replace(".pdf", "-p2.png"), dpi=110)
     print("ok")
