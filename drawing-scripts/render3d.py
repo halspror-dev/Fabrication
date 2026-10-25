@@ -13,7 +13,7 @@ trig = affinity.translate(trigger, *P)
 tsc = affinity.translate(g["trig_scale"], *P)
 gsc = g["grip_scale"]
 HD = g["HDPE"]
-TS = g["collar_holes"][0][1]   # thumbscrew y
+TS = g["collar_holes"][0][1]   # keeper lock pin y
 T = 0.125
 
 # ---------- mesh building: list of (tri[3x3], part_id, color) ----------
@@ -44,6 +44,7 @@ def revolve(profile, pid, col, n=72, axis="z", center=(0, 0, 0)):
     def pt(r, h, a):
         cx, cy, cz = center
         if axis == "z": return (cx + r * math.cos(a), cy + r * math.sin(a), cz + h)
+        if axis == "x": return (cx + h, cy + r * math.cos(a), cz + r * math.sin(a))
         return (cx + r * math.cos(a), cy + h, cz + r * math.sin(a))  # axis y
     for (r1, h1), (r2, h2) in zip(profile, profile[1:]):
         for a, b in zip(th, th[1:]):
@@ -66,11 +67,13 @@ HW = {
     4: ("Button-head screw 10-24 x 5/8\"", "Bolt Depot #4396", 1, "up-stop"),
     5: ("Hitch pin clip, stainless, 0.080\" wire", "Bolt Depot #27207", 2, "snaps through each handle tab, under the collar"),
     6: ("Nylon spacer 5 mm ID x 10 mm OD x 5 mm", "Bolt Depot #13775", 1, "up-stop, under the trigger tail"),
-    7: ("#10 flat washer", "Bolt Depot #2946", 2, "up-stop nut, thumbscrew"),
-    8: ("Spade thumbscrew 10-24 x 1/2\"", "Bolt Depot #24038", 1, "keeper lock"),
-    9: ("Hex nut 10-24 (epoxied under collar)", "Bolt Depot #2560", 1, "keeper lock"),
+    7: ("#10 flat washer", "Bolt Depot #2946", 1, "up-stop nut"),
+    8: ("Clevis pin 3/16\" x 1/2\", stainless", "part no. TBD", 1, "keeper lock, down through keeper + collar"),
+    9: ("Hitch pin clip to fit the clevis pin", "size TBD", 1, "through the clevis pin, under the collar"),
     10: ("Screw post, barrel half, 3/16\" x 5/8\"", "MyBinding SO058ASP", 4, "scales (head on the outside)"),
     11: ("Screw post, screw half", "MyBinding SO058ASP", 4, "scales (head on the inside)"),
+    12: ("Screw post, barrel half, 3/16\" x 1/4\"", "part no. TBD", 2, "keeper guides (head under the collar)"),
+    13: ("Screw post, screw half (1/4\" post)", "part no. TBD", 2, "keeper guides (head on the keeper)"),
 }
 INST = []    # (pid, hw number, joint name, anchor point)
 
@@ -82,9 +85,11 @@ def hexagon(cx, cy, af, hole_d=None, rot=0.0):
 
 
 def rev(axis, x, y, z, prof, pid, col, n=28):
-    """Revolve a profile [(r, a)] about a y- or z-axis through (x, y, z); a is the absolute coordinate along the axis."""
+    """Revolve a profile [(r, a)] about an x-, y- or z-axis through (x, y, z); a is the absolute coordinate along the axis."""
     if axis == "y":
         revolve(prof, pid, col, n=n, axis="y", center=(x, 0, z))
+    elif axis == "x":
+        revolve(prof, pid, col, n=n, axis="x", center=(0, y, z))
     else:
         revolve(prof, pid, col, n=n, axis="z", center=(x, y, 0))
 
@@ -142,16 +147,36 @@ def hw_washer(axis, x, y, z, a_face, s, pid, idr, odr, t, col):
     rev(axis, x, y, z, [(idr, a_face), (odr, a_face), (odr, a_face + s * t), (idr, a_face + s * t), (idr, a_face)], pid, col)
 
 
-def hw_post_barrel(axis, x, y, z, a_face, s, pid):
-    """Screw-post barrel half: 7/16 head behind a_face, 3/16 barrel 0.625 long in +s."""
+def hw_post_barrel(axis, x, y, z, a_face, s, pid, L=0.625):
+    """Screw-post barrel half: 7/16 head behind a_face, 3/16 barrel L long in +s."""
     rev(axis, x, y, z, [(0, a_face - s * 0.06), (0.21, a_face - s * 0.06), (0.219, a_face - s * 0.03), (0.219, a_face), (0, a_face)], pid, ALUM)
-    rev(axis, x, y, z, [(0, a_face), (0.094, a_face), (0.094, a_face + s * 0.625), (0, a_face + s * 0.625)], pid, ALUM)
+    rev(axis, x, y, z, [(0, a_face), (0.094, a_face), (0.094, a_face + s * L), (0, a_face + s * L)], pid, ALUM)
 
 
 def hw_post_screw(axis, x, y, z, a_face, s, pid):
     """Screw-post screw half: slotted 7/16 head behind a_face, short screw in +s."""
     rev(axis, x, y, z, [(0, a_face - s * 0.06), (0.21, a_face - s * 0.06), (0.219, a_face - s * 0.03), (0.219, a_face), (0, a_face)], pid, ALUM)
     shank(axis, x, y, z, a_face, a_face + s * 0.25, pid, r=0.07)
+
+
+def hw_clevis(x, y, z_face, pid):
+    """3/16" clevis pin, axis z: 5/16 x 1/16 head on z_face, 1/2" of shank below it."""
+    rev("z", x, y, 0, [(0, z_face + 0.06), (0.15, z_face + 0.06), (0.16, z_face + 0.04), (0.16, z_face), (0, z_face)], pid, STEEL)
+    rev("z", x, y, 0, [(0, z_face), (0.094, z_face), (0.094, z_face - 0.48), (0.07, z_face - 0.50), (0, z_face - 0.50)], pid, STEEL)
+
+
+def hw_rclip_flat(x, y, z, s, pid):
+    """Hitch pin clip lying flat (clip plane x-y) around a vertical pin at (x, y): straight leg along x through the pin's
+    cross hole at height z, bend behind the pin, wavy leg back along the pin's side (toward -y)."""
+    r, rad, xb = 0.03, 0.07, x - 0.25
+    rev("x", 0, y, z, [(0, xb), (r, xb), (r, xb + 0.80), (0, xb + 0.80)], pid, STEEL, n=10)
+    for k in range(9):
+        a = -math.pi / 2 + k * math.pi / 8
+        xx, yy = xb - rad * math.cos(a), y - rad + rad * math.sin(a)
+        rev("x", 0, yy, z, [(0, xx - 0.015), (r, xx - 0.015), (r, xx + 0.015), (0, xx + 0.015)], pid, STEEL, n=8)
+    for k, (x0, x1) in enumerate(((0.0, 0.18), (0.18, 0.34), (0.34, 0.62))):   # wavy leg: hump hugs the pin
+        dy = 0.04 if k == 1 else 0.0
+        rev("x", 0, y - 2 * rad + dy, z, [(0, xb + x0), (r, xb + x0), (r, xb + x1), (0, xb + x1)], pid, STEEL, n=8)
 
 
 def hw_rclip(x, z, z_bot, y_bend, s, pid):
@@ -171,15 +196,6 @@ def hw_rclip(x, z, z_bot, y_bend, s, pid):
 
 def hw_spacer(axis, x, y, z, a_face, s, pid):
     rev(axis, x, y, z, [(0.098, a_face), (SR, a_face), (SR, a_face + s * 0.197), (0.098, a_face + s * 0.197), (0.098, a_face)], pid, BLACKNY)
-
-
-def hw_thumb(x, y, z_face, pid):
-    """Spade thumbscrew, axis z: washer face at z_face, spade head above, 1/2\" of thread below (head size approximate)."""
-    rev("z", x, y, 0, [(0, z_face), (0.16, z_face), (0.16, z_face + 0.06), (0, z_face + 0.06)], pid, STEEL)
-    spade = shapely.geometry.Polygon([(-0.12, 0.06), (0.12, 0.06), (0.265, 0.22), (0.265, 0.36), (0.20, 0.44), (-0.20, 0.44), (-0.265, 0.36), (-0.265, 0.22)])
-    spade = affinity.translate(spade, x, z_face).buffer(0.02, join_style=1)
-    extrude(spade, "xz", y - 0.045, y + 0.045, pid, STEEL)
-    shank("z", x, y, 0, z_face, z_face - 0.5, pid)
 
 
 def build(explode=0.0, show_can=True, show_trigger=True, show_hw=True):
@@ -223,10 +239,14 @@ def build(explode=0.0, show_can=True, show_trigger=True, show_hw=True):
     add(6, "up-stop", (sx, FY0 - 0.1, sz + SR), lambda p, ox, oy, oz: hw_spacer("y", sx + ox, 0, sz + oz, FY0 - 0.197 + oy, 1, p), O(dy=-0.7))
     add(7, "up-stop", (sx, FY1 + 0.03, sz + 0.25), lambda p, ox, oy, oz: hw_washer("y", sx + ox, 0, sz + oz, FY1 + oy, 1, p, 0.1095, 0.25, 0.049, STEEL), O(dy=0.45))
     add(3, "up-stop", (sx, FY1 + 0.049 + 0.236, sz), lambda p, ox, oy, oz: hw_locknut("y", sx + ox, 0, sz + oz, FY1 + 0.049 + oy, 1, p), O(dy=0.85))
-    # keeper thumbscrew: washer on the keeper, nut epoxied under the collar
-    add(8, "keeper lock", (0, TS, 0.125 + 0.049 + 0.44), lambda p, ox, oy, oz: hw_thumb(ox, TS + oy, 0.125 + 0.049 + oz, p), O(dz=1.25))
-    add(7, "keeper lock", (0.25, TS, 0.15), lambda p, ox, oy, oz: hw_washer("z", ox, TS + oy, 0, 0.125 + oz, 1, p, 0.1095, 0.25, 0.049, STEEL), O(dz=0.8))
-    add(9, "keeper lock", (0, TS, -CT - 0.125), lambda p, ox, oy, oz: hw_hexnut("z", ox, TS + oy, 0, -CT + oz, -1, p), O(dz=-1.45))
+    # v0.92 keeper: clevis pin down through keeper + collar, hitch clip through it under the collar; 2 guide posts
+    zc = 0.125 - 0.41
+    add(8, "keeper lock", (0, TS, 0.185), lambda p, ox, oy, oz: hw_clevis(ox, TS + oy, 0.125 + oz, p), O(dz=1.3))
+    add(9, "keeper lock", (0.4, TS - 0.14, zc), lambda p, ox, oy, oz: hw_rclip_flat(ox, TS + oy, zc + oz, 1, p), O(dx=0.9, dz=-1.7))
+    for gx, gy in g["GUIDES"]:
+        gy = -gy
+        add(12, "keeper guide", (gx, gy, -CT - 0.06), lambda p, ox, oy, oz, gx=gx, gy=gy: hw_post_barrel("z", gx + ox, gy + oy, 0, -CT + oz, 1, p, L=0.25), O(dz=-1.45))
+        add(13, "keeper guide", (gx, gy, 0.22), lambda p, ox, oy, oz, gx=gx, gy=gy: hw_post_screw("z", gx + ox, gy + oy, 0, -CT + 0.25 + oz, -1, p), O(dz=1.0))
     # handle tabs: a hitch pin clip through each tab under the collar, bend on the outside (+y), wavy leg under the tab bottom
     for x0, x1 in g["TABS"]:
         x, z, zb = (x0 + x1) / 2, g["PIN_Z"], g["TAB_BOT"] - 0.045
@@ -367,17 +387,17 @@ if __name__ == "__main__":
                  "Red balloons = hardware number (list at the bottom, and the exploded views on the next pages).", fontsize=7, va="top")
         build()
         img, info = render(12, -75)
-        panel(fig, [0.03, 0.52, 0.94, 0.37], img, info, "From the front-right (trigger side)", [
+        panel(fig, [0.03, 0.535, 0.94, 0.35], img, info, "From the front-right (trigger side)", [
             ((0.95, -0.4, -0.06), "COLLAR", (150, 170)),
             ((0.6, -1.9, 0.125), "KEEPER", (260, 60)),
             ((-1.0, -0.06, 1.2), "TRIGGER", (-200, -200)),
             ((-4.7, -0.1, -3.4), "GRIP", (-220, 40))], min_px=200)
         build()
         img, info = render(22, 125)
-        panel(fig, [0.03, 0.15, 0.94, 0.37], img, info, "From the back-left (clip side)", [
+        panel(fig, [0.03, 0.185, 0.94, 0.35], img, info, "From the back-left (clip side)", [
             ((-0.95, 0.22, -0.2), "TABS + clips", (-330, 120)),
             ((-3.0, 0.22, 0.0), "HANDLE plate", (300, 120))], min_px=200)
-        legend(fig, 0.135)
+        legend(fig, 0.175)
         pdf.savefig(fig); fig.savefig(out.replace(".pdf", "-p1.png"), dpi=110)
 
         for pg, (el, az, side) in enumerate(((16, -38, "trigger side"), (18, 142, "clip side"))):
@@ -387,8 +407,8 @@ if __name__ == "__main__":
                      "Trigger-side parts come out toward you on one page, clip-side parts on the other. Red balloon = hardware number in the list below.", fontsize=7, va="top")
             build(explode=1.0, show_can=False)
             img, info = render(el, az, W=1600, H=1600, margin=0.03)
-            panel(fig, [0.02, 0.24, 0.96, 0.69], img, info, "", [], min_px=400)
-            legend(fig, 0.225)
+            panel(fig, [0.02, 0.27, 0.96, 0.66], img, info, "", [], min_px=400)
+            legend(fig, 0.255)
             pdf.savefig(fig); fig.savefig(out.replace(".pdf", "-p%d.png" % (3 + pg)), dpi=110)
 
         fig = plt.figure(figsize=(8.5, 11))
@@ -402,4 +422,17 @@ if __name__ == "__main__":
             img, info = render(-22, 120, fit_ids=ids, margin=0.30)
             panel(fig, [0.03, 0.47 - 0.42 * k, 0.94, 0.40], img, info, cap, [], min_px=200, only=(5,))
         pdf.savefig(fig); fig.savefig(out.replace(".pdf", "-p2.png"), dpi=110)
+
+        fig = plt.figure(figsize=(8.5, 11))
+        fig.text(0.06, 0.965, "KEEPER LOCK CLOSE-UP (can, handle and trigger hidden)", fontsize=11, weight="bold")
+        fig.text(0.06, 0.95, "No thumbscrew. The keeper slides on 2 short screw posts (12 + 13) that sit in 2 slots, staggered 0.60\" along the slide, so it\n"
+                 "can only move straight in and out; it can't spin, and it stays on the collar with the pin out. To lock, a stainless clevis pin (8)\n"
+                 "drops through the keeper and the collar, and a hitch pin clip (9) pushes through the pin under the collar. Top: from above. Bottom: from below.", fontsize=7, va="top")
+        for k, (ex, el, az, cap) in enumerate(((0.0, 32, -60, "Assembled, from above (keeper locked on a seat can)"),
+                                                 (0.6, -25, -60, "Pulled apart, from below: posts and pin up/down, clip out"))):
+            build(explode=ex, show_can=False, show_trigger=False)
+            ids = [p for p, n, j, a in INST if j in ("keeper lock", "keeper guide")] + [11]
+            img, info = render(el, az, fit_ids=ids, margin=0.12)
+            panel(fig, [0.03, 0.47 - 0.43 * k, 0.94, 0.41], img, info, cap, [], min_px=150, only=(8, 9, 12, 13))
+        pdf.savefig(fig); fig.savefig(out.replace(".pdf", "-p2k.png"), dpi=110)
     print("ok")
