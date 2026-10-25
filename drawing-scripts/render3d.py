@@ -64,7 +64,7 @@ HW = {
     2: ("Nylon washer 1/4\" (0.265 x 0.625 x 0.060)", "Bolt Depot #15939", 1, "pivot, between trigger and handle"),
     3: ("Nylon-insert locknut 10-24", "Bolt Depot #2552", 2, "pivot, up-stop"),
     4: ("Button-head screw 10-24 x 5/8\"", "Bolt Depot #4396", 1, "up-stop"),
-    5: ("Cotter pin 3/32\" x 1/2\", stainless", "Bolt Depot (look up)", 2, "through each handle tab, under the collar"),
+    5: ("Cotter pin 3/32\" x 1/2\", stainless", "Bolt Depot #14532", 2, "through each handle tab, under the collar"),
     6: ("Nylon spacer 5 mm ID x 10 mm OD x 5 mm", "Bolt Depot #13775", 1, "up-stop, under the trigger tail"),
     7: ("#10 flat washer", "Bolt Depot #2946", 2, "up-stop nut, thumbscrew"),
     8: ("Spade thumbscrew 10-24 x 1/2\"", "Bolt Depot #24038", 1, "keeper lock"),

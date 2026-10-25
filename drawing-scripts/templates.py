@@ -224,7 +224,7 @@ with PdfPages(OUT) as pdf:
         "10-24 nylon locknut ........................ 2  (pivot, stop)  BD #2552\n"
         "#10 flat washer ............................ 2  (stop, keeper) BD #2946\n"
         "10-24 x 5/8\" button-head screw ............ 1  (up-stop)     BD #4396\n"
-        "3/32\" x 1/2\" stainless cotter pin ......... 2  (tabs)        BD (look up)\n"
+        "3/32\" x 1/2\" stainless cotter pin ......... 2  (tabs)        BD #14532\n"
         "10-24 x 1/2\" spade thumbscrew ............. 1  (keeper)      BD #24038\n"
         "10-24 hex nut .............................. 1  (under collar) BD #2560\n"
         "5/8\" alum. screw post, 3/16\" barrel ...... 4  (scales)  MyBinding SO058ASP" % (TS_LEN, GW, GL),
