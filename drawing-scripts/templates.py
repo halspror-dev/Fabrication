@@ -242,23 +242,20 @@ with PdfPages(OUT) as pdf:
         "#10 flat washer ............................ 1  (up-stop)     BD #2946\n"
         "10-24 x 5/8\" button-head screw ............ 1  (up-stop)     BD #4396\n"
         "Hitch pin clip, stainless, 0.080\" wire ..... 2  (tabs)        BD #27207\n"
-        "Clevis pin 1/4\" x 1/2\", stainless ......... 1  (keeper lock) not at BD, TBD\n"
+        "Clevis pin 1/4\" x 1/2\", stainless ......... 1  (keeper lock) Rivetsonline CLPF-0250-0500\n"
         "Hitch pin clip, stainless, 0.080\" wire ..... 1  (keeper lock) BD #27207\n"
         "1/4\" alum. screw post, 3/16\" barrel ...... 2  (keeper guides) MyBinding SO014ASP\n"
         "5/8\" alum. screw post, 3/16\" barrel ...... 4  (scales)  MyBinding SO058ASP" % (TS_LEN, GW, GL),
         fontsize=7.5, va="top", linespacing=1.6, family="monospace")
-    fig.text(0.07, 0.42, "LASER COST, METAL PARTS (SendCutSend quotes, 2026-10-24, 1/8\" 5052, before shipping)", fontsize=10, weight="bold")
-    quotes = {"trigger": (6.85, 4.61, 3.39, 2.79, 1.81), "keeper": (4.19, 3.00, 2.19, 1.91, 1.22),
-              "frame": (9.80, 6.31, 4.62, 3.90, 2.58), "collar": (6.77, 4.72, 3.58, 3.00, 1.98)}
-    rows = ["%-8s %8s %8s %8s %8s %8s %8s" % ("qty", "trigger", "keeper", "frame", "collar", "per set", "batch")]
-    for i, q in enumerate((1, 10, 50, 100, 1000)):
-        per = sum(v[i] for v in quotes.values())
-        rows.append("%-8d %8.2f %8.2f %8.2f %8.2f %8.2f %10s" % (q, quotes["trigger"][i], quotes["keeper"][i], quotes["frame"][i],
-                    quotes["collar"][i], per, "{:,.2f}".format(per * q)))
+    fig.text(0.07, 0.42, "LASER COST, METAL PARTS (SendCutSend, 5052, each, before tax; shipping is free)", fontsize=10, weight="bold")
+    rows = ["%-34s %8s %8s %8s %8s" % ("part (v0.93 files, qty 100)", "trigger", "keeper", "frame", "collar"),
+            "%-34s %8s %8.2f %8s %8.2f" % ("carlie's quotes 2026-10-25", "-", 2.61, "-", 3.12),
+            "%-34s %8.2f %8s %8.2f %8s" % ("old v0.7 quote (not re-quoted yet)", 2.79, "", 3.90, ""),
+            "%-34s %8s %8.2f %8s %8s" % ("option: keeper in 0.090\"", "", 2.17, "", "")]
     fig.text(0.07, 0.407, "\n".join(rows), fontsize=7.5, va="top", family="monospace", linespacing=1.6)
-    fig.text(0.07, 0.30, "Table is the old 1/8\" collar quote. v0.9 changed the collar (slots) and frame (tabs): re-quote both at qty 100.\n"
-             "v0.7 confirmed, 100 handles with Wichita Falls tax and shipping: about \\$2,020 (\\$20.20 a handle); v0.9 drops the angle\n"
-             "(\\$55.73) and 4 screws + 4 nuts per handle. Full list: buy-sheet/BUY-SHEET.md.", fontsize=7.5, va="top", linespacing=1.6)
+    fig.text(0.07, 0.33, "Collar 0.090\" (0.100\" is \\$3.33). Keeper, frame and trigger 1/8\". Metal for one handle about \\$13.44 with 8.25% tax.\n"
+             "100 handles, everything (metal, Bolt Depot, Rivetsonline pins, MyBinding posts, HDPE), tax and shipping in:\n"
+             "about \\$2,060 (\\$20.60 a handle). Frame and trigger are still the old quote. Full list: buy-sheet/BUY-SHEET.md.", fontsize=7.5, va="top", linespacing=1.6)
     pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p0.png"), dpi=80)
 
     f1 = page(pdf, [

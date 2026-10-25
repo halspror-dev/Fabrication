@@ -68,7 +68,7 @@ HW = {
     5: ("Hitch pin clip, stainless, 0.080\" wire", "Bolt Depot #27207", 2, "snaps through each handle tab, under the collar"),
     6: ("Nylon spacer 5 mm ID x 10 mm OD x 5 mm", "Bolt Depot #13775", 1, "up-stop, under the trigger tail"),
     7: ("#10 flat washer", "Bolt Depot #2946", 1, "up-stop nut"),
-    8: ("Clevis pin 1/4\" x 1/2\", stainless", "not at BD, TBD", 1, "keeper lock, down through keeper + collar"),
+    8: ("Clevis pin 1/4\" x 1/2\", stainless", "Rivetsonline CLPF-0250-0500", 1, "keeper lock, down through keeper + collar"),
     9: ("Hitch pin clip, stainless, 0.080\" wire", "Bolt Depot #27207", 1, "through the clevis pin, under the collar"),
     10: ("Screw post, barrel half, 3/16\" x 5/8\"", "MyBinding SO058ASP", 4, "scales (head on the outside)"),
     11: ("Screw post, screw half", "MyBinding SO058ASP", 4, "scales (head on the inside)"),
@@ -374,9 +374,9 @@ if __name__ == "__main__":
 
     def legend(fig, y_top, title="HARDWARE (balloon numbers)"):
         fig.text(0.06, y_top, title, fontsize=8, weight="bold")
-        rows = ["%-3s %-46s %-22s %4s  %s" % ("#", "part", "buy", "qty", "where")]
+        rows = ["%-3s %-46s %-27s %4s  %s" % ("#", "part", "buy", "qty", "where")]
         for k, (name, src, q, where) in HW.items():
-            rows.append("%-3d %-46s %-22s %4d  %s" % (k, name, src, q, where))
+            rows.append("%-3d %-46s %-27s %4d  %s" % (k, name, src, q, where))
         fig.text(0.06, y_top - 0.008, "\n".join(rows), fontsize=5.6, family="monospace", va="top", linespacing=1.45)
 
     with PdfPages(out) as pdf:
