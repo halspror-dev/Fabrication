@@ -5,7 +5,7 @@ import ezdxf
 from shapely.geometry import Polygon, LineString
 from shapely import affinity
 
-src = open(sys.argv[1]).read().split("# ---- Angle clip")[0].replace("OUT = sys.argv[1]\nPNG = sys.argv[2]\n", "")
+src = open(sys.argv[1]).read().split("\ndef draw(")[0].replace("OUT = sys.argv[1]\nPNG = sys.argv[2]\n", "")
 g = {}
 exec(src, g)
 report = {}
