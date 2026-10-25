@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from shapely.geometry import Polygon, Point, LineString, box
 from shapely import affinity
+import shapely.ops
 
 OUT = sys.argv[1]
 PNG = sys.argv[2]
@@ -25,15 +26,18 @@ def rounded_rect(x0, y0, x1, y1, r):
 
 
 # ---- Collar (top view: x forward, y left) ----
+CT = 0.090   # v0.7: collar thickness (1/8" was too thick to slide under the valve-cup lip; 2 dimes, 0.106", fit)
+BIG = 0.80   # keyhole: big hole center is 0.80" from the seat center (keeper side)
 collar = rounded_rect(-1.70, -1.00, 1.00, 2.80, 0.25)
-# v0.3: trim the back strip beside the keeper (back edge x=-0.95 on the keyhole side), R0.25 inside + outside
-collar = collar.difference(box(-1.80, 0.10, -0.95, 2.90))
+# v0.7: back strip now reaches the big hole too (was trimmed at y=0.10), so the clip can bolt on in a 2nd position
+collar = collar.difference(box(-1.80, 1.00, -0.95, 2.90))
 collar = collar.buffer(0.25, join_style=1).buffer(-0.25, join_style=1)  # inside corner
 collar = collar.buffer(-0.25, join_style=1).buffer(0.25, join_style=1)  # outside corners
 keyhole = hole(0, 0, 1.125).union(box(-0.5625, 0, 0.5625, 0.80)).union(hole(0, 0.80, 1.375))
 collar = collar.difference(keyhole)
 # v0.4: thumbscrew hole moved 0.25" toward the big hole (was y 2.45) so the keeper can clamp tighter
-collar_holes = [(0, 2.20, D7), (-0.95, -0.60, D7), (-1.45, -0.60, D7)]
+# v0.7: clip holes for 2 positions: can in the SEAT (y -0.60) or can in the BIG HOLE (0.80 over, y +0.20)
+collar_holes = [(0, 2.20, D7), (-0.95, -0.60, D7), (-1.45, -0.60, D7), (-0.95, -0.60 + BIG, D7), (-1.45, -0.60 + BIG, D7)]
 for x, y, d in collar_holes:
     collar = collar.difference(hole(x, y, d))
 
@@ -162,7 +166,7 @@ def page(pdf, items, scale_box=True):
         draw(ax, g, title, notes, lb, ex)
     if scale_box:
         ax.add_patch(plt.Rectangle((0.6, 0.5), 1, 1, fill=False, lw=0.8))
-        ax.text(2.0, 0.55, "Spray can trigger handle v0.6, 1:1 templates. Metal: 0.125\" (1/8\") 5052 aluminum. Scales: 1/4\" HDPE.\n"
+        ax.text(2.0, 0.55, "Spray can trigger handle v0.7, 1:1 templates. Metal: 5052 aluminum, collar 0.090\", other parts 0.125\" (1/8\"). Scales: 1/4\" HDPE.\n"
                 "Holes marked #7 = 0.201\" (10-24 clearance). F = 0.257\" (1/4\" shoulder bolt). Inches.\n"
                 "Datum: + = can axis. Dims from carlie's build notes (future-builds-spray-can-trigger.md).", fontsize=6)
     pdf.savefig(fig)
@@ -191,7 +195,7 @@ def frame_marks(ax, ox, oy):
 with PdfPages(OUT) as pdf:
     # ---------- Cover: what v0.5 is, parts per handle, laser cost ----------
     fig = plt.figure(figsize=(8.5, 11))
-    fig.text(0.07, 0.94, "SPRAY CAN TRIGGER HANDLE  v0.6", fontsize=16, weight="bold")
+    fig.text(0.07, 0.94, "SPRAY CAN TRIGGER HANDLE  v0.7", fontsize=16, weight="bold")
     fig.text(0.07, 0.915, "Private design. Drawing set: 1:1 templates, assembly views, moving-part sections, open/closed checks, 3D views.", fontsize=8)
     fig.text(0.07, 0.885, "WHAT CHANGED SINCE v0.3 (the parts cut in the v1 order)", fontsize=10, weight="bold")
     fig.text(0.07, 0.875,
@@ -200,11 +204,13 @@ with PdfPages(OUT) as pdf:
         "- Up-stop: the trigger tail rests on a 10 mm nylon spacer on a button screw in its own slot, so it can't swing up.\n"
         "- Comfort: 1/4\" HDPE scales, plain rectangles you saw cut, on both sides of the finger bar (5/8\" thick) and the grip.\n"
         "- Keeper: thumbscrew hole 1/4\" closer to the big hole and a shorter slot. Opens 1.10\" (just clears the ring),\n"
-        "  locks with 0.15\" of slot to spare so it can always tighten. Every moving part is checked open and closed (page 9).",
+        "  locks with 0.15\" of slot to spare so it can always tighten. Every moving part is checked open and closed (pages 9-10).\n"
+        "- v0.7 (after the v1 fit test): collar 0.090\" thick (1/8\" would not slide under the valve lip). Second pair of clip holes\n"
+        "  so a can whose ring only fits the BIG HOLE works too: clip moves 0.80\" toward the keeper (page 10).",
         fontsize=7.5, va="top", linespacing=1.6)
-    fig.text(0.07, 0.735, "PARTS PER HANDLE", fontsize=10, weight="bold")
-    fig.text(0.07, 0.725,
-        "Laser cut, 1/8\" 5052 aluminum:  collar, keeper, frame, trigger (1 each)\n"
+    fig.text(0.07, 0.70, "PARTS PER HANDLE", fontsize=10, weight="bold")
+    fig.text(0.07, 0.69,
+        "Laser cut, 5052 aluminum:  collar 0.090\", keeper, frame, trigger 1/8\" (1 each)\n"
         "Saw cut, 1/4\" HDPE sheet:  trigger scale 0.70 x %.2f x2, grip scale %.2f x %.2f x2 (rectangles)\n"
         "Aluminum angle 3/4 x 3/4 x 1/8:  1.10\" piece (angle clip)\n"
         "Shoulder bolt 1/4\" x 1/4\", 10-24 ........ 1  (pivot)       BD #14221\n"
@@ -217,7 +223,7 @@ with PdfPages(OUT) as pdf:
         "10-24 hex nut .............................. 1  (under collar) BD #2560\n"
         "5/8\" alum. screw post, 3/16\" barrel ...... 4  (scales)  MyBinding SO058ASP" % (TS_LEN, GW, GL),
         fontsize=7.5, va="top", linespacing=1.6, family="monospace")
-    fig.text(0.07, 0.52, "LASER COST, METAL PARTS (SendCutSend quotes, 2026-10-24, 1/8\" 5052, before shipping)", fontsize=10, weight="bold")
+    fig.text(0.07, 0.45, "LASER COST, METAL PARTS (SendCutSend quotes, 2026-10-24, 1/8\" 5052, before shipping)", fontsize=10, weight="bold")
     quotes = {"trigger": (6.85, 4.61, 3.39, 2.79, 1.81), "keeper": (4.19, 3.00, 2.19, 1.91, 1.22),
               "frame": (9.80, 6.31, 4.62, 3.90, 2.58), "collar": (6.77, 4.72, 3.58, 3.00, 1.98)}
     rows = ["%-8s %8s %8s %8s %8s %8s %8s" % ("qty", "trigger", "keeper", "frame", "collar", "per set", "batch")]
@@ -225,17 +231,16 @@ with PdfPages(OUT) as pdf:
         per = sum(v[i] for v in quotes.values())
         rows.append("%-8d %8.2f %8.2f %8.2f %8.2f %8.2f %10s" % (q, quotes["trigger"][i], quotes["keeper"][i], quotes["frame"][i],
                     quotes["collar"][i], per, "{:,.2f}".format(per * q)))
-    fig.text(0.07, 0.507, "\n".join(rows), fontsize=7.5, va="top", family="monospace", linespacing=1.6)
-    fig.text(0.07, 0.40, "Prices are the v0.5 trigger and frame. v0.6 straightens the trigger and moves 2 frame holes: re-quote those two.\n"
-             "Hardware (Bolt Depot bulk, 2026-10-24): about \\$4.50 a handle buying for 100, \\$4.05 in the biggest packs, with\n"
-             "aluminum screw posts (\\$0.18 each). Stainless sex bolts #14315 are \\$1.53 each in 100s and would add \\$5.40 a handle.\n"
-             "Not priced yet: HDPE sheet and aluminum angle (both pennies to cents a handle).", fontsize=7.5, va="top", linespacing=1.6)
+    fig.text(0.07, 0.437, "\n".join(rows), fontsize=7.5, va="top", family="monospace", linespacing=1.6)
+    fig.text(0.07, 0.33, "Collar price is for 1/8\": re-quote the v0.7 collar at 0.090\" (bigger outline, 2 more holes, thinner).\n"
+             "Confirmed for 100 handles with tax/shipping (2026-10-24): SendCutSend \\$1,254.62, Bolt Depot \\$440.99, screw posts ~\\$90.25,\n"
+             "angle \\$55.73, HDPE \\$97.23 + shipping. About \\$19.40 a handle. Full list: buy-sheet/BUY-SHEET.md.", fontsize=7.5, va="top", linespacing=1.6)
     pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p0.png"), dpi=80)
 
     f1 = page(pdf, [
         (collar, 2.3, 8.6, "COLLAR (top view, qty 1)",
-         "Forward (spray) is right; top of page = can's left. Seat 1.125, big hole 1.375. Cut slot 0.02\" small, file to fit.\n3 holes #7: thumbscrew (bottom, v0.4: 1/4\" closer to the big hole), 2 clip holes (upper left). + = can center.",
-         [(0, -2.20, ""), (-0.95, 0.60, ""), (-1.45, 0.60, "")], can_axis),
+         "0.090\" 5052 (v0.7, was 1/8\"). Forward (spray) is right; top of page = can's left. Seat 1.125, big hole 1.375.\n5 holes #7: thumbscrew (bottom), clip holes for the SEAT position (upper pair) and the BIG-HOLE position (lower pair).",
+         [(0, -2.20, ""), (-0.95, 0.60, "seat"), (-1.45, 0.60, ""), (-0.95, -0.20, "big hole"), (-1.45, -0.20, "")], can_axis),
         (keeper, 2.0, 4.9, "KEEPER (qty 1)",
          "Notch 1.30 dia. Slot #7 wide.", [], None),
         (trigger, 6.0, 8.3, "TRIGGER (side view, qty 1)",
@@ -296,7 +301,7 @@ with PdfPages(OUT) as pdf:
     ax.plot([ox + 0.33, ox + 0.9], [oy + 0.55, oy + 0.55], ":", color="#777777", lw=0.6)
     ax.text(ox + 0.5, oy + 0.6, "spray", fontsize=6, color="#777777")
     fill(ax, frame, ox, oy, "#f3d9b1", z=2)
-    fill(ax, box(-1.70, -0.125, 1.00, 0), ox, oy, "#9ec5ea", z=3)
+    fill(ax, box(-1.70, -CT, 1.00, 0), ox, oy, "#9ec5ea", z=3)
     fill(ax, box(-0.875, 0, 0.875, 0.125), ox, oy, "#c9e6c3", z=3)
     fill(ax, box(-1.80, 0, -0.70, 0.75), ox, oy, "none", ec="#555555", ls="--", z=4)
     fill(ax, affinity.translate(grip_scale, 0, 0), ox, oy, "#3a3a3a", z=3)
@@ -381,8 +386,8 @@ with PdfPages(OUT) as pdf:
         r(ax, -0.64, 0, 0.64, 0.14, ox, oy, "#bdbdbd", ec="#777777", zo=1)
         r(ax, -0.33, 0.14, 0.33, 0.765, ox, oy, "white", ec="#777777", zo=1)
         # collar section at x=0: keyhole spans y -1.4875..+0.5625
-        r(ax, -2.80, -0.125, -1.4875, 0, ox, oy, "#9ec5ea")
-        r(ax, 0.5625, -0.125, 1.00, 0, ox, oy, "#9ec5ea")
+        r(ax, -2.80, -CT, -1.4875, 0, ox, oy, "#9ec5ea")
+        r(ax, 0.5625, -CT, 1.00, 0, ox, oy, "#9ec5ea")
         # keeper section: material from notch edge (-0.65) to -2.75, slot gap -1.00..-2.45 (centers 1.10..2.35)
         k0 = shift
         r(ax, -2.75 + k0, 0, -0.65 + k0, 0.125, ox, oy, "#c9e6c3")
@@ -391,7 +396,7 @@ with PdfPages(OUT) as pdf:
         r(ax, y - 0.095, -0.36, y + 0.095, 0.17, ox, oy, "#777777", zo=3)
         r(ax, y - 0.30, 0.17, y + 0.30, 0.42, ox, oy, "#555555", zo=3)
         r(ax, y - 0.22, 0.125, y + 0.22, 0.17, ox, oy, "#999999", zo=3)
-        r(ax, y - 0.19, -0.30, y + 0.19, -0.125, ox, oy, "#555555", zo=3)
+        r(ax, y - 0.19, -CT - 0.175, y + 0.19, -CT, ox, oy, "#555555", zo=3)
         ax.text(0.5, oy + K * 1.35, title, fontsize=9, weight="bold")
         return ox, oy
 
@@ -503,7 +508,7 @@ with PdfPages(OUT) as pdf:
 
     can_side = Polygon([(-1.28, -0.95), (-1.15, -0.85), (-1.0, -0.65), (-0.75, -0.35), (-0.62, 0.0), (0.62, 0.0), (0.75, -0.35),
                         (1.0, -0.65), (1.15, -0.85), (1.28, -0.95), (1.28, -6), (-1.28, -6)])
-    collar_side = box(-1.70, -0.125, 1.00, 0)
+    collar_side = box(-1.70, -CT, 1.00, 0)
     grip_front = LineString([(-3.55, -0.50), (-4.20, -4.55)])
     rows = {}
     for dz in (SLOT[0], 0.0, SLOT[1]):
@@ -530,6 +535,62 @@ with PdfPages(OUT) as pdf:
         checks.append(("Trigger", st, what + " (pivot low/mid/high)", " / ".join("%.2f" % v for v, _ in vals) + '"',
                        "PASS" if all(ok for _, ok in vals) else "FAIL"))
 
+    # v0.7: two can positions. Ring in the SEAT (clip in the seat holes) or ring in the BIG HOLE (clip in the
+    # 2nd holes, so the handle and trigger sit 0.80" toward the keeper). Plan view, at keeper height (z 0..0.125).
+    def footprint(g, dy, y0, y1, z0=0.0, z1=0.145):
+        band = g.intersection(box(-10, z0, 10, z1))
+        if band.is_empty:
+            return None
+        bx = band.bounds
+        return box(bx[0], y0 + dy, bx[2], y1 + dy)
+    MODES = (("SEAT", 0.0, 0.0), ("BIG HOLE", -BIG, BIG))   # name, handle shift in y, keeper offset when locked
+    mode_rows = []
+    mstart = len(checks)
+    for name, dy, k_lock in MODES:
+        ring = Point(0, dy).buffer(RING, 64)
+        clip_flat_p = box(-1.80, 0.22 + dy, -0.70, 0.97 + dy)
+        clip_up_p = box(-1.80, 0.22 + dy, -0.70, 0.345 + dy)
+        frame_p = footprint(frame, dy, 0.095, 0.22)
+        frame_hi = footprint(frame, dy, 0.095, 0.22, 0.0, 0.80)
+        trig_ps = []
+        for dz in (SLOT[0], 0.0, SLOT[1]):
+            P2 = (P[0], P[1] + dz)
+            for ang in (0.0, -math.degrees(BT / NOSE)):
+                t = affinity.rotate(affinity.translate(trigger, *P2), ang, origin=P2)
+                fp = footprint(t, dy, -0.0625, 0.0625)
+                if fp is not None:
+                    trig_ps.append(fp)
+                for side in (1, -1):
+                    sc = affinity.rotate(affinity.translate(trig_scale, *P2), ang, origin=P2)
+                    y0, y1 = (0.0625, 0.0625 + HDPE) if side > 0 else (-0.0625 - HDPE, -0.0625)
+                    fp = footprint(sc, dy, y0, y1)
+                    if fp is not None:
+                        trig_ps.append(fp)
+        k_closed_m = keeper_at(k_lock)
+        holes_ok = all(any(abs(hx - x) < 1e-6 and abs(hy - (0.60 + dy)) < 1e-6 for hx, hy, _ in collar_holes) for x in (-0.95, -1.45))
+        chk("Clip", name, "collar holes line up with the clip bolts", None, holes_ok)
+        chk("Clip", name, "trigger nose sits over the button (handle shift %.2f)" % dy, 0.0, True)
+        flat_over = clip_flat_p.difference(Polygon(collar.exterior)).area
+        chk("Clip", name, "flat leg sits on the collar (overhang, sq in)", flat_over, flat_over < 0.15, unit="")
+        chk("Keeper", name + " LOCK", "screw inside the slot (from notch center, slot %.2f-%.2f)" % (k_lo, k_hi), -TS - k_lock,
+            k_lo + 0.05 <= -TS - k_lock <= k_hi - 0.05)
+        chk("Keeper", name + " LOCK", "notch reaches the ring", k_closed_m.distance(ring), k_closed_m.distance(ring) < 0.03)
+        k_open_m = keeper_at(off_open)
+        chk("Keeper", name + " OPEN", "ring clears the keeper", k_open_m.distance(ring), k_open_m.distance(ring) > 0.02)
+        trig_p = shapely.ops.unary_union(trig_ps) if trig_ps else None
+        for st, kk in (("LOCK", k_closed_m), ("OPEN", k_open_m)):
+            others = {"handle plate": frame_p, "clip": clip_flat_p, "trigger + scales": trig_p}
+            for what, gg in others.items():
+                if gg is None:
+                    continue
+                d = kk.distance(gg)
+                chk("Keeper", name + " " + st, "clears the " + what, d, d > 0.05)
+        d = frame_hi.distance(ring.union(Point(0, dy).buffer(0.33, 32)))
+        chk("Handle", name, "handle plate clears the ring and button", d, d > 0.05)
+        mode_rows.append((name, dy, k_lock, clip_flat_p, frame_p, trig_ps))
+    mode_checks = checks[mstart:]
+    del checks[mstart:]
+
     fig, ax = newpage("OPEN / CLOSED CHECKS: every moving part in both end states (not templates)",
         "Each moving part is drawn and measured at both ends of its travel, so the mechanism is proven on paper before it's cut.\n"
         "Top row: keeper OPEN and CLOSED from above (1:1). Dashed circle = valve ring. Table: clearances computed from the template outlines.\n"
@@ -553,6 +614,39 @@ with PdfPages(OUT) as pdf:
             "Real-life check when the parts arrive: do each state by hand on a can (keeper open, can on, keeper closed and tight;\n"
             "trigger at rest on the stop, squeeze until it sprays) and confirm each PASS line above.", fontsize=6.5, va="top")
     pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p7.png"), dpi=80)
+
+    # ---------- v0.7: two can positions (plan views + checks) ----------
+    fig, ax = newpage("TWO CAN POSITIONS: ring in the SEAT, or ring in the BIG HOLE (top view 1:1, not templates)",
+        "Most cans: the ring sits in the SEAT and the angle clip bolts to the SEAT holes. A can whose ring only fits the BIG HOLE: bolt the clip\n"
+        "to the second pair of holes, which moves the handle and trigger 0.80\" toward the keeper so the nose is over the button again.\n"
+        "The keeper slot already covers both: locked on a seat can the screw is 2.20\" from the notch, on a big-hole can 1.40\". Same parts, no new hardware.")
+    for i, (name, dy, k_lock, clip_p, frame_p, trig_ps) in enumerate(mode_rows):
+        kx, ky = 2.3 + 3.9 * i, 7.3
+        fill(ax, collar, kx, ky, "#9ec5ea", z=1)
+        fill(ax, keeper_at(k_lock), kx, ky, "#c9e6c3", alpha=0.85, z=2)
+        fill(ax, clip_p, kx, ky, "#d9d9d9", z=3)
+        fill(ax, box(-2.2, 0.095 + dy, -0.80, 0.22 + dy), kx, ky, "#f3d9b1", z=4)
+        fill(ax, box(-2.2, -0.0625 + dy, NOSE + P[0], 0.0625 + dy), kx, ky, "#bfbfbf", z=5)
+        x, y = Point(0, dy).buffer(RING, 64).exterior.xy
+        ax.plot([v + kx for v in x], [v + ky for v in y], "k--", lw=0.8, zorder=6)
+        ax.add_patch(plt.Circle((kx, ky + dy), 0.33, fc="white", ec="#777777", lw=0.6, zorder=6))
+        for hx in (-0.95, -1.45):
+            ax.add_patch(plt.Circle((kx + hx, ky + 0.60 + dy), 0.12, fc="#333333", zorder=7))
+        ax.add_patch(plt.Circle((kx, ky + TS), 0.15, fc="#555555", zorder=7))
+        ax.text(kx - 1.8, ky + 1.55, "RING IN THE %s" % name, fontsize=8, weight="bold")
+        ax.text(kx - 1.8, ky + 1.30, "clip bolts: %s holes, keeper locked" % ("upper (seat)" if dy == 0 else "lower (big-hole)"), fontsize=6)
+    ax.text(0.5, 3.75, "Blue = collar, green = keeper (locked), light gray = angle clip flat leg, tan = handle plate, gray strip = trigger (on edge),\n"
+            "dashed = valve ring, white = button, black dots = the 2 clip bolts in use.", fontsize=6)
+    y0 = 3.3
+    ax.text(0.5, y0 + 0.2, "PART      STATE           CHECK", fontsize=6.5, weight="bold", family="monospace")
+    for i, (part, st, what, val, res) in enumerate(mode_checks):
+        yy = y0 - 0.115 * i
+        ax.text(0.5, yy, "%-9s %-15s %s" % (part, st, what), fontsize=5.5, family="monospace")
+        ax.text(7.2, yy, val, fontsize=5.5, family="monospace", ha="right")
+        ax.text(7.45, yy, res, fontsize=5.5, family="monospace", weight="bold", color="#2e7d32" if res == "PASS" else "#c0392b")
+    pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p8.png"), dpi=80)
+    for c in mode_checks:
+        print(*c)
     for c in checks:
         print(*c)
 print("ok")

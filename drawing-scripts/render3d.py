@@ -66,7 +66,7 @@ def build(explode=0.0, show_can=True, show_trigger=True):
         revolve([(0, -3.6), (1.28, -3.6), (1.28, -0.95), (1.15, -0.85), (1.0, -0.65), (0.75, -0.35), (0.6, -0.15), (0.53, -0.13), (0, -0.13)], 1, COLORS["can"])
         revolve([(0, 0), (0.64, 0), (0.64, 0.14), (0, 0.14)], 2, COLORS["ring"])
         revolve([(0, 0.14), (0.33, 0.14), (0.33, 0.765), (0, 0.765)], 3, COLORS["button"], n=48)
-    extrude(collar, "xy", -T, 0, 10, COLORS["collar"])
+    extrude(collar, "xy", -g["CT"], 0, 10, COLORS["collar"])
     extrude(keeper, "xy", 0, T, 11, COLORS["keeper"])
     extrude(frame, "xz", 0.095, 0.22, 12, COLORS["frame"])
     extrude(gsc, "xz", 0.22, 0.22 + HD, 18, (0.16, 0.16, 0.17))
@@ -93,7 +93,7 @@ def build(explode=0.0, show_can=True, show_trigger=True):
     # keeper thumbscrew: knurled head, washer, shank, nut under collar
     revolve([(0, -0.36), (0.095, -0.36), (0.095, 0.125), (0.22, 0.125), (0.22, 0.17), (0.30, 0.17), (0.30, 0.42), (0, 0.42)],
             30, (0.30, 0.30, 0.30), n=32, center=(0, TS, 0))
-    revolve([(0, -0.30), (0.19, -0.30), (0.19, -0.125), (0, -0.125)], 31, (0.22, 0.22, 0.22), n=6, center=(0, TS, 0))
+    revolve([(0, -g["CT"] - 0.175), (0.19, -g["CT"] - 0.175), (0.19, -g["CT"]), (0, -g["CT"])], 31, (0.22, 0.22, 0.22), n=6, center=(0, TS, 0))
     pid = 21
     for x in (-0.95, -1.45):
         z0 = -0.30 + 6.5 * e
