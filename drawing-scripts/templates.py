@@ -36,15 +36,17 @@ collar = collar.buffer(-0.25, join_style=1).buffer(0.25, join_style=1)  # outsid
 keyhole = hole(0, 0, 1.125).union(box(-0.5625, 0, 0.5625, 0.80)).union(hole(0, 0.80, 1.375))
 collar = collar.difference(keyhole)
 # v0.4: thumbscrew hole moved 0.25" toward the big hole (was y 2.45) so the keeper can clamp tighter
-# v0.9: no angle clip. The handle plate has 2 tabs that drop straight down through 2 collar slots, and a cotter pin
-# through each tab under the collar holds it down. 2 pairs of slots: can in the SEAT or can in the BIG HOLE (0.80 over).
+# v0.9: no angle clip. The handle plate has 2 tabs that drop straight down through 2 collar slots, and a stainless
+# hitch pin clip (R-clip, snaps on, nothing to bend) through each tab under the collar holds it down. 2 pairs of slots: can in the SEAT or can in the BIG HOLE (0.80 over).
 FY0, FY1 = 0.095, 0.22                   # handle plate faces in y (final, flipped coordinates)
 FMID = (FY0 + FY1) / 2
 TABS = ((-1.58, -1.28), (-1.15, -0.85))  # tab x extents (rear, front); v0.9b: 0.30 long (was 0.20, too little metal by the pin hole)
 SLOT_W = 0.135                           # slot width for the 0.125 plate (+0.010 for sheet and cut tolerance)
 TAB_BOT = -0.33                          # tab bottom (0.13 of metal below the pin hole)
-PIN_D = 0.110                            # hole for a 3/32" cotter pin
-PIN_Z = -CT - 0.003 - PIN_D / 2          # hole top just under the collar, so the pin pulls the plate down tight
+PIN_D = 0.110                            # hole for the 0.080" wire of a #27207 hitch pin clip
+CT_MAX = 0.100                           # thickest collar being tried (0.090 and 0.100 are ordered to test the fit)
+PIN_Z = -CT_MAX - 0.003 - PIN_D / 2      # hole top just under the thickest collar (0.013 play on a 0.090 collar)
+CLIP_DROP = 0.09                         # hitch clip's bent leg wraps this far below the tab bottom
 collar_holes = [(0, 2.20, D7)]
 for x, y, d in collar_holes:
     collar = collar.difference(hole(x, y, d))
@@ -216,7 +218,7 @@ with PdfPages(OUT) as pdf:
         "  locks with 0.15\" of slot to spare so it can always tighten. Every moving part is checked open and closed (pages 9-10).\n"
         "- v0.7 (after the v1 fit test): collar 0.090\" thick (1/8\" would not slide under the valve lip). Second pair of clip holes\n"
         "  so a can whose ring only fits the BIG HOLE works too: clip moves 0.80\" toward the keeper (page 10).\n"
-        "- v0.9: NO ANGLE CLIP. The handle plate's 2 tabs drop through slots in the collar, a cotter pin under each. No angle to\n"
+        "- v0.9: NO ANGLE CLIP. The handle plate's 2 tabs drop through slots in the collar, a snap-on hitch pin clip under each. No angle to\n"
         "  saw, 4 screws + 4 nuts gone, nothing on the trigger side. Second pair of slots for big-hole cans. Every bolt in 3D (last pages).",
         fontsize=7.5, va="top", linespacing=1.6)
     fig.text(0.07, 0.675, "PARTS PER HANDLE", fontsize=10, weight="bold")
@@ -230,7 +232,7 @@ with PdfPages(OUT) as pdf:
         "10-24 nylon locknut ........................ 2  (pivot, stop)  BD #2552\n"
         "#10 flat washer ............................ 2  (stop, keeper) BD #2946\n"
         "10-24 x 5/8\" button-head screw ............ 1  (up-stop)     BD #4396\n"
-        "3/32\" x 1/2\" stainless cotter pin ......... 2  (tabs)        BD #14532\n"
+        "Hitch pin clip, stainless, 0.080\" wire ..... 2  (tabs)        BD #27207\n"
         "10-24 x 1/2\" spade thumbscrew ............. 1  (keeper)      BD #24038\n"
         "10-24 hex nut .............................. 1  (under collar) BD #2560\n"
         "5/8\" alum. screw post, 3/16\" barrel ...... 4  (scales)  MyBinding SO058ASP" % (TS_LEN, GW, GL),
@@ -261,7 +263,7 @@ with PdfPages(OUT) as pdf:
     f1.savefig(PNG.replace(".png", "-p1.png"), dpi=80)
     f2 = page(pdf, [
         (frame, 6.0, 6.3, "FRAME / HANDLE (side view, qty 1)",
-         "Forward is right. 2 TABS on the bottom drop through the collar slots; a 3/32\" cotter pin\ngoes through the small hole in each tab, under the collar. Grip-scale holes #7.", [], frame_marks),
+         "Forward is right. 2 TABS on the bottom drop through the collar slots; a snap-on hitch pin\nclip goes through the small hole in each tab, under the collar. Grip-scale holes #7.", [], frame_marks),
     ])
     f2.savefig(PNG.replace(".png", "-p2.png"), dpi=80)
     ts_flat = box(0, 0, W, TS_LEN).difference(hole(W / 2, 0.60, D7)).difference(hole(W / 2, TS_LEN - 0.60, D7))
@@ -300,7 +302,7 @@ with PdfPages(OUT) as pdf:
     # Side view
     fig, ax = newpage("ASSEMBLY: SIDE VIEW (1:1, looking at the right side of the can)",
         "Nozzle sprays to the RIGHT. Your hand holds the grip on the left. The trigger is closest to you, the handle plate behind it,\n"
-        "the 2 tabs drop through the collar with a cotter pin under it. Gray = the can, which is not a part.")
+        "the 2 tabs drop through the collar with a snap-on clip under it. Gray = the can, which is not a part.")
     ox, oy = 6.4, 6.3
     bead = 0.14
     can = Polygon([(-0.64, bead), (0.64, bead), (0.62, -0.05), (0.75, -0.35), (1.0, -0.65), (1.15, -0.85), (1.28, -0.95), (1.28, -4.4),
@@ -329,7 +331,7 @@ with PdfPages(OUT) as pdf:
     lab(ax, ox - 0.2, oy + 0.75, ox + 0.5, oy + 0.85, "BUTTON")
     lab(ax, ox + P[0], oy + P[1] + 0.19, ox - 1.2, oy + 2.8, "shoulder bolt = TRIGGER PIVOT (in the slot)")
     lab(ax, ox + 0.0, oy + 1.0, ox + 0.4, oy + 2.2, "trigger NOSE rests on top of button")
-    lab(ax, ox + TABS[1][0], oy - 0.2, ox - 1.9, oy - 1.3, "2 TABS through the collar,\ncotter pin under each")
+    lab(ax, ox + TABS[1][0], oy - 0.2, ox - 1.9, oy - 1.3, "2 TABS through the collar,\nhitch pin clip under each")
     lab(ax, ox + S[0], oy + S[1] + 0.19, ox - 4.6, oy + 2.3, "UP-STOP: nylon spacer on a button screw, the trigger tail rests on it")
     lab(ax, ox - 4.7, oy - 2.6, ox - 6.0, oy - 1.4, "HANDLE / FRAME plate\n(grip: black HDPE scales\nboth sides, 2 screw posts)")
     lab(ax, ox - 2.5, oy - 2.2, ox - 2.1, oy - 4.3, "TRIGGER bar: 1/8\" plate with black HDPE scales\nboth sides (5/8\" thick), 2 screw posts.\nWhole hand pulls it back = nose pushes button down")
@@ -361,7 +363,7 @@ with PdfPages(OUT) as pdf:
     lab(ax, ox + 0.45, oy + 0.45, ox - 0.3, oy + 2.4, "valve ring sits in the keyhole SEAT\n(center of the can)")
     lab(ax, ox + 0.6, oy - 1.8, ox - 4.2, oy - 2.9, "KEEPER: slide toward the can, tighten thumbscrew.\nSlide away (down the page) to take it off.")
     lab(ax, ox, oy - 2.20, ox - 1.8, oy - 2.6, "thumbscrew")
-    lab(ax, ox + TABS[1][0], oy + 0.3, ox - 2.6, oy + 1.9, "handle TABS in the collar slots,\ncotter pins under the collar (dark)")
+    lab(ax, ox + TABS[1][0], oy + 0.3, ox - 2.6, oy + 1.9, "handle TABS in the collar slots,\nclips under the collar (dark)")
     lab(ax, ox - 3.2, oy + 0.16, ox - 4.9, oy + 1.0, "HANDLE plate (on edge)")
     lab(ax, ox + 0.0, oy - 0.03, ox - 0.9, oy - 0.9, "TRIGGER nose (on edge,\non the can's centerline)")
     lab(ax, ox - 2.6, oy - 0.03, ox - 5.4, oy - 1.0, "TRIGGER (on edge, on the can's centerline)")
@@ -370,13 +372,13 @@ with PdfPages(OUT) as pdf:
              "1. Collar on can: pull keeper back, drop collar over the valve ring at the big hole, slide it so the ring sits in the seat.\n"
              "2. Keeper: slide it toward the can until the notch hugs the ring, tighten the thumbscrew.\n"
              "3. Handle plate: drop its 2 tabs into the SEAT slots (or the BIG-HOLE slots for a can that only fits the big hole).\n"
-             "4. Push a 3/32\" cotter pin through the hole in each tab under the collar and bend the legs apart. No clip, no bolts.\n"
+             "4. Push a hitch pin clip through the hole in each tab under the collar until its bent leg snaps around the tab. No bolts.\n"
              "5. Trigger on the right side of the handle (on the centerline): shoulder bolt through trigger, nylon washer, handle slot, nut.\n"
              "6. Up-stop: button screw through the nylon spacer and the up-stop slot from the trigger side, #10 washer + locknut on the far side.\n"
              "7. Scales: one each side of the trigger bar and of the grip, a 5/8\" screw post through each hole.\n"
              "8. Turn the button so the nozzle points forward. Slide the pivot until the nose just touches the button, tighten.\n"
              "    Then slide the up-stop up under the tail until it touches, tighten. The trigger now can't flip up.\n"
-             "For a first rough fit, any bolt works as the pivot and a bent nail works as a cotter pin.")
+             "For a first rough fit, any bolt works as the pivot and a bent nail works as a pin.")
     ax.text(0.5, 1.0, steps, fontsize=6.5, va="bottom")
     pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p4.png"), dpi=80)
 
@@ -545,18 +547,18 @@ with PdfPages(OUT) as pdf:
                                    ("finger room to the can", t.distance(can_side), 0.4)):
                 rows.setdefault((st, what), []).append((val, val > lim))
     tab_geoms = [box(x0, TAB_BOT, x1, 0) for x0, x1 in TABS]
-    pins = [Point((x0 + x1) / 2, PIN_Z).buffer(PIN_D / 2) for x0, x1 in TABS]
-    d = min(t.distance(can_side) for t in tab_geoms)
-    chk("Tabs", "ON CAN", "tab bottoms clear the can top (drawn can)", d, d > 0.05)
+    pins = [box((x0 + x1) / 2 - 0.05, TAB_BOT - CLIP_DROP, (x0 + x1) / 2 + 0.05, PIN_Z + 0.04) for x0, x1 in TABS]   # clip loop around the tab
+    d = min(t.distance(can_side) for t in tab_geoms + pins)
+    chk("Tabs", "ON CAN", "tab bottoms and clips clear the can top (drawn can)", d, d > 0.05)
     rim = min(min((x1 - x0 - PIN_D) / 2, PIN_Z - PIN_D / 2 - TAB_BOT) for x0, x1 in TABS)
     chk("Tabs", "ON CAN", "metal around each pin hole (sides and below)", rim, rim >= 0.09)
-    chk("Tabs", "ON CAN", "pin hole top sits under the collar (pin pulls the plate down)", -CT - (PIN_Z + PIN_D / 2), PIN_Z + PIN_D / 2 < -CT)
+    chk("Tabs", "ON CAN", "pin hole clears the thickest collar (0.100)", -CT_MAX - (PIN_Z + PIN_D / 2), PIN_Z + PIN_D / 2 < -CT_MAX)
     for dz in (SLOT[0], 0.0, SLOT[1]):
         P2 = (P[0], P[1] + dz)
         for st, ang in (("REST", 0.0), ("FULL", -math.degrees(BT / NOSE))):
             t = affinity.rotate(affinity.translate(trigger, *P2), ang, origin=P2).union(
                 affinity.rotate(affinity.translate(trig_scale, *P2), ang, origin=P2))
-            rows.setdefault((st, "clears the tabs + cotter pins"), []).append(
+            rows.setdefault((st, "clears the tabs + clips"), []).append(
                 (min(t.distance(g) for g in tab_geoms + pins), min(t.distance(g) for g in tab_geoms + pins) > 0.1))
     for (st, what), vals in sorted(rows.items(), key=lambda kv: (kv[0][1], kv[0][0] != "REST")):
         checks.append(("Trigger", st, what + " (pivot low/mid/high)", " / ".join("%.2f" % v for v, _ in vals) + '"',
@@ -664,7 +666,7 @@ with PdfPages(OUT) as pdf:
         ax.text(kx - 1.8, ky + 1.55, "RING IN THE %s" % name, fontsize=8, weight="bold")
         ax.text(kx - 1.8, ky + 1.30, "handle tabs: %s slots, keeper locked" % ("upper (seat)" if dy == 0 else "lower (big-hole)"), fontsize=6)
     ax.text(0.5, 3.75, "Blue = collar, green = keeper (locked), tan = handle plate, gray strip = trigger (on edge),\n"
-            "dashed = valve ring, white = button, black bars = the 2 cotter pins under the collar (the other 2 slots stay empty).", fontsize=6)
+            "dashed = valve ring, white = button, black bars = the 2 clips under the collar (the other 2 slots stay empty).", fontsize=6)
     y0 = 3.3
     ax.text(0.5, y0 + 0.2, "PART      STATE           CHECK", fontsize=6.5, weight="bold", family="monospace")
     for i, (part, st, what, val, res) in enumerate(mode_checks):
