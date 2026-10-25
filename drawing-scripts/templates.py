@@ -40,9 +40,9 @@ collar = collar.difference(keyhole)
 # through each tab under the collar holds it down. 2 pairs of slots: can in the SEAT or can in the BIG HOLE (0.80 over).
 FY0, FY1 = 0.095, 0.22                   # handle plate faces in y (final, flipped coordinates)
 FMID = (FY0 + FY1) / 2
-TABS = ((-1.52, -1.32), (-1.05, -0.85))  # tab x extents (rear, front), 0.20 long
+TABS = ((-1.58, -1.28), (-1.15, -0.85))  # tab x extents (rear, front); v0.9b: 0.30 long (was 0.20, too little metal by the pin hole)
 SLOT_W = 0.135                           # slot width for the 0.125 plate (+0.010 for sheet and cut tolerance)
-TAB_BOT = -0.29                          # tab bottom
+TAB_BOT = -0.33                          # tab bottom (0.13 of metal below the pin hole)
 PIN_D = 0.110                            # hole for a 3/32" cotter pin
 PIN_Z = -CT - 0.003 - PIN_D / 2          # hole top just under the collar, so the pin pulls the plate down tight
 collar_holes = [(0, 2.20, D7)]
@@ -58,8 +58,14 @@ collar = affinity.scale(collar, 1, -1, origin=(0, 0))
 keeper = affinity.scale(keeper, 1, -1, origin=(0, 0))
 collar_holes = [(x, -y, d) for x, y, d in collar_holes]
 TAB_SLOTS = [(x0, x1, FMID + dy) for dy in (0.0, -BIG) for x0, x1 in TABS]
+
+
+def tab_slot(x0, x1, ym):   # near-square slot (small corner radius) so it wastes no collar past the tab ends
+    return rounded_rect(x0 - 0.01, ym - SLOT_W / 2, x1 + 0.01, ym + SLOT_W / 2, 0.02)
+
+
 for x0, x1, ym in TAB_SLOTS:
-    collar = collar.difference(slot(x0, ym, x1, ym, SLOT_W))
+    collar = collar.difference(tab_slot(x0, x1, ym))
 
 # ---- Frame (side view: x forward, z up) ----
 # v0.4: trimmed top, grip raked ~8 deg and moved back, pivot moved forward for more trigger travel
@@ -542,6 +548,8 @@ with PdfPages(OUT) as pdf:
     pins = [Point((x0 + x1) / 2, PIN_Z).buffer(PIN_D / 2) for x0, x1 in TABS]
     d = min(t.distance(can_side) for t in tab_geoms)
     chk("Tabs", "ON CAN", "tab bottoms clear the can top (drawn can)", d, d > 0.05)
+    rim = min(min((x1 - x0 - PIN_D) / 2, PIN_Z - PIN_D / 2 - TAB_BOT) for x0, x1 in TABS)
+    chk("Tabs", "ON CAN", "metal around each pin hole (sides and below)", rim, rim >= 0.09)
     chk("Tabs", "ON CAN", "pin hole top sits under the collar (pin pulls the plate down)", -CT - (PIN_Z + PIN_D / 2), PIN_Z + PIN_D / 2 < -CT)
     for dz in (SLOT[0], 0.0, SLOT[1]):
         P2 = (P[0], P[1] + dz)
@@ -585,7 +593,7 @@ with PdfPages(OUT) as pdf:
                         trig_ps.append(fp)
         k_closed_m = keeper_at(k_lock)
         tabs_p = [box(x0, FY0 + dy, x1, FY1 + dy) for x0, x1 in TABS]
-        slots_m = [slot(x0, ym, x1, ym, SLOT_W) for x0, x1, ym in TAB_SLOTS if abs(ym - (FMID + dy)) < 1e-6]
+        slots_m = [tab_slot(x0, x1, ym) for x0, x1, ym in TAB_SLOTS if abs(ym - (FMID + dy)) < 1e-6]
         fit = all(sl.contains(tb) for sl, tb in zip(slots_m, tabs_p))
         play = min(SLOT_W - (FY1 - FY0), min(sl.bounds[2] - tb.bounds[2] for sl, tb in zip(slots_m, tabs_p)))
         chk("Tabs", name, "both tabs drop into their slots (smallest play)", play, fit and play > 0.004)
