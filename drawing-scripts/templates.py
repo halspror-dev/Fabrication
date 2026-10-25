@@ -113,13 +113,16 @@ nose = box(0, -0.25, NOSE, 0.25).union(hole(NOSE, 0, 0.5))
 bump = hole(NOSE, -0.25, 0.40)
 boss = hole(0, 0, 0.90)
 tail = box(-1.15, -0.22, 0, 0.22).union(hole(-1.15, 0, 0.44))
-F0, F1, W = (-0.55, -1.55), (-0.95, -5.35), 0.70   # bar front edge top/bottom, bar width
-neck = Polygon([(0.15, -0.40), (-0.55, -1.30), F0, (F0[0] - W, F0[1]), (-0.70, -0.60), (-0.55, -0.22), (0, -0.22)])
+# v0.95: bar front edge moved back (top more than bottom) so the printed sleeve sets the grip span for an average man's hand
+BAR_BACK = (0.30, 0.10)                              # (top, bottom) shift of the bar front edge toward the grip
+F0, F1, W = (-0.55 - BAR_BACK[0], -1.55), (-0.95 - BAR_BACK[1], -5.35), 0.70   # bar front edge top/bottom, bar width
 L = math.hypot(F1[0] - F0[0], F1[1] - F0[1])
 ux, uz = (F1[0] - F0[0]) / L, (F1[1] - F0[1]) / L   # down the bar
 nx, nz = -uz, ux
 if nx < 0:
     nx, nz = -nx, -nz                                 # forward-pointing normal
+# v0.95: the neck's back edge meets the bar's top back corner, so the raked-back bar leaves no ledge there
+neck = Polygon([(0.15, -0.40), (-0.55, -1.30), F0, (F0[0] - ux * 0.10 - nx * W, F0[1] - uz * 0.10 - nz * W), (-0.70, -0.60), (-0.55, -0.22), (0, -0.22)])
 
 
 def along_bar(t0, t1, w):
@@ -131,35 +134,84 @@ def along_bar(t0, t1, w):
 bar = along_bar(-0.10, L, W)                          # square bottom end, so a straight saw-cut scale matches it
 trigger = nose.union(bump).union(boss).union(tail).union(neck).union(bar)
 trigger = trigger.buffer(-0.06, join_style=1).buffer(0.06, join_style=1)   # round every outside corner
-# v0.6: HDPE scales (1/4", 3/16" was sold out) are plain rectangles, saw cut by hand: both sides of the finger bar and the grip,
-# held by 5/8" screw posts (3/16" barrel) in #7 holes on each scale's centerline
-HDPE = 0.25
+HDPE = 0.25                                           # printed sleeve side wall, so the bar and grip are 5/8" thick
 # v0.8: trigger plate faces in y. The pivot shoulder (0.25) holds trigger 0.125 + nylon washer 0.060 against the
 # handle plate face (y 0.095), with the 0.065 play on the head side, so the trigger sits at y -0.090..+0.035.
 TY0, TY1 = -0.090, 0.035
-TS0 = (-1.80 - F0[1]) / uz                            # scale starts where the bar is clear of the neck
-TS_LEN = round(L - TS0 - 0.03, 2)                     # stops just short of the rounded bar end
-trig_scale = along_bar(TS0, TS0 + TS_LEN, W)
+# v0.95: printed U-SLEEVES instead of flat scales (carlie: rounder, more comfortable, sized for an average man's hand).
+# One PETG sleeve slides over the FRONT edge of the trigger bar, one over the BACK edge of the grip; each is held by the
+# same 2 screw posts. The hand side is a full round across the 5/8" thickness, so no aluminum edge touches the fingers
+# or the palm. Lee et al. 2009 (PMID 19424925): 50-55 mm spans grip strongest and most comfortable, about 27-29% of
+# hand length; average man's hand 188 mm -> about 51-55 mm. Middle and ring fingers want the widest span (bow-shaped).
+SLV_T = 0.06                                          # sleeve wall over the metal edge
+SLV_R = (0.125 + 2 * HDPE) / 2                        # full round across the sleeve
+SLV_SLOT = 0.135                                      # printed slot for the 0.125 plate (slides on)
+BOW, BOW_S = 0.08, (0.45, 3.85)                       # trigger sleeve bulge under the middle/ring fingers, and where it runs
+
+
+def bow(s):
+    a, b = BOW_S
+    return BOW * math.sin(math.pi * (s - a) / (b - a)) ** 2 if a < s < b else 0.0
+
+
+def bar_pt(s, n):                                     # s down the bar front edge, n forward of it
+    return (F0[0] + ux * s + nx * n, F0[1] + uz * s + nz * n)
+
+
+FINGER_Z = (-1.0, -1.75, -2.6, -3.45)                 # finger heights for the span (index, middle, ring, little), can z
+TS0 = (-1.92 - F0[1]) / uz                            # sleeve starts where the bar is clear of the neck (v0.95: 0.12 lower, clears the handle at pivot lobe 4)
+TS_LEN = round(L - TS0 - 0.03, 2)                     # post holes are placed on this length (as the old scales)
+TRIG_SLV = [(s, SLV_T + bow(s)) for s in (TS0 + (L + SLV_T - TS0) * k / 80 for k in range(81))]   # (s, front of sleeve)
+trig_sleeve = Polygon([bar_pt(s, f) for s, f in TRIG_SLV] + [bar_pt(s, -W) for s, f in reversed(TRIG_SLV)])
+trig_sleeve = trig_sleeve.buffer(-0.04, join_style=1).buffer(0.04, join_style=1)
 SCALE_HOLES = []
 for t in (0.60, TS_LEN - 0.60):                      # 0.60" in from each end
-    tt = TS0 + t
-    SCALE_HOLES.append((F0[0] + ux * tt - nx * W / 2, F0[1] + uz * tt - nz * W / 2))
+    SCALE_HOLES.append(bar_pt(TS0 + t, -W / 2))
 for x, z in SCALE_HOLES:
     trigger = trigger.difference(hole(x, z, D7))
-    trig_scale = trig_scale.difference(hole(x, z, D7))
+    trig_sleeve = trig_sleeve.difference(hole(x, z, D7))
 trigger = trigger.difference(hole(0, 0, DF))
-# grip scale: rectangle on the grip's centerline, inside the plate outline
-G0, G1 = (-4.10, -0.85), (-4.65, -4.40)             # grip centerline top/bottom
+# grip sleeve: front edge on the old scale's front line, back wraps the plate's back edge (palm side)
+G0, G1 = (-4.10, -0.85), (-4.65, -4.40)             # grip centerline top/bottom (post holes sit on it)
 GW = 0.86
 GL = round(math.hypot(G1[0] - G0[0], G1[1] - G0[1]), 2)
 gux, guz = (G1[0] - G0[0]) / GL, (G1[1] - G0[1]) / GL
-gnx, gnz = -guz, gux
-grip_scale = Polygon([(G0[0] + s * gnx * GW / 2 + t * gux, G0[1] + s * gnz * GW / 2 + t * guz)
-                      for s, t in ((1, 0), (1, GL), (-1, GL), (-1, 0))])
+gnx, gnz = -guz, gux                                  # forward
 GRIP_HOLES = [(G0[0] + gux * t, G0[1] + guz * t) for t in (0.60, GL - 0.60)]
 for x, z in GRIP_HOLES:
     frame = frame.difference(hole(x, z, D7))
-    grip_scale = grip_scale.difference(hole(x, z, D7))
+
+
+def grip_pt(s, n):
+    return (G0[0] + gux * s + gnx * n, G0[1] + guz * s + gnz * n)
+
+
+PLATE_BOT = min(z for x, z in Polygon(frame.exterior).exterior.coords)
+GS0 = -0.35                                           # sleeve top (up near the web of the thumb)
+GS1 = (PLATE_BOT - SLV_T - G0[1]) / guz               # sleeve bottom: wraps under the plate bottom
+GRIP_SLV, nb_last = [], None
+plate_out = Polygon(frame.exterior)
+for k in range(81):
+    s = GS0 + (GS1 - GS0) * k / 80
+    c = grip_pt(s, 0)
+    if c[1] > PLATE_BOT + 0.25:                       # above the plate's rounded bottom corner; below it, keep the wall straight
+        hit = LineString([c, grip_pt(s, -2.0)]).intersection(plate_out.exterior)
+        pts_ = [hit] if hit.geom_type == "Point" else list(getattr(hit, "geoms", []))
+        nb_last = -min(math.hypot(p.x - c[0], p.y - c[1]) for p in pts_) - SLV_T
+    GRIP_SLV.append((s, nb_last, GW / 2))             # (s, back of sleeve, front of sleeve)
+def d_section(n_flat, n_tip, toward, slot):
+    """Sleeve cross-section in (n, y): flat side at n_flat, full round (radius SLV_R) whose tip is at n_tip, minus the slot."""
+    c = n_tip - toward * SLV_R
+    return box(min(n_flat, c), -SLV_R, max(n_flat, c), SLV_R).union(Point(c, 0).buffer(SLV_R, 64)).difference(slot)
+
+
+TRIG_SEC = d_section(-W, SLV_T + BOW, 1, box(-W - 0.01, -SLV_SLOT / 2, 0, SLV_SLOT / 2))   # at the bow peak
+grip_sleeve = Polygon([grip_pt(s, f) for s, b, f in GRIP_SLV] + [grip_pt(s, b) for s, b, f in reversed(GRIP_SLV)])
+grip_sleeve = grip_sleeve.buffer(-0.04, join_style=1).buffer(0.04, join_style=1)
+for x, z in GRIP_HOLES:
+    grip_sleeve = grip_sleeve.difference(hole(x, z, D7))
+_s, _b, _f = GRIP_SLV[40]
+GRIP_SEC = d_section(_f, _b, -1, box(_b + SLV_T, -SLV_SLOT / 2, _f + 0.01, SLV_SLOT / 2))       # mid grip
 STOP_AT = (S[0] - P[0], S[1] - P[1])   # stop bolt in trigger coordinates (under the tail)
 
 
@@ -183,7 +235,7 @@ def draw(ax, geom, title, notes, holes_lbl=(), extra=None):
     ax.text(minx, maxy + 0.08, notes, fontsize=5.5, va="bottom")
 
 
-def page(pdf, items, scale_box=True):
+def page(pdf, items, scale_box=True, note=None):
     fig = plt.figure(figsize=(8.5, 11))
     ax = fig.add_axes([0, 0, 1, 1])
     ax.set_xlim(0, 8.5)
@@ -197,9 +249,11 @@ def page(pdf, items, scale_box=True):
         draw(ax, g, title, notes, lb, ex)
     if scale_box:
         ax.add_patch(plt.Rectangle((0.6, 0.5), 1, 1, fill=False, lw=0.8))
-        ax.text(2.0, 0.55, "Spray can trigger handle v0.94, 1:1 templates. Metal: 5052 aluminum, collar 0.090\", other parts 0.125\" (1/8\"). Scales: printed PETG, 1/4\".\n"
+        ax.text(2.0, 0.55, "Spray can trigger handle v0.95, 1:1 templates. Metal: 5052 aluminum, collar 0.090\", other parts 0.125\" (1/8\"). Sleeves: printed PETG, 5/8\" thick.\n"
                 "Holes marked #7 = 0.201\" (10-24 clearance). 1/4\" pin holes cut 0.250\", ream 1/4\". Inches.\n"
                 "Datum: + = can axis. Dims from carlie's build notes (future-builds-spray-can-trigger.md).", fontsize=6)
+    if note:
+        fig.text(0.07, 0.30, note, fontsize=7, va="top", linespacing=1.6)
     pdf.savefig(fig)
     return fig
 
@@ -226,12 +280,12 @@ def frame_marks(ax, ox, oy):
 with PdfPages(OUT) as pdf:
     # ---------- Cover: what v0.5 is, parts per handle, laser cost ----------
     fig = plt.figure(figsize=(8.5, 11))
-    fig.text(0.07, 0.94, "SPRAY CAN TRIGGER HANDLE  v0.94", fontsize=16, weight="bold")
+    fig.text(0.07, 0.94, "SPRAY CAN TRIGGER HANDLE  v0.95", fontsize=16, weight="bold")
     fig.text(0.07, 0.915, "Private design. Drawing set: 1:1 templates, assembly views, moving-part sections, open/closed checks, 3D views.", fontsize=8)
     fig.text(0.07, 0.885, "WHAT CHANGED SINCE v0.3 (the parts cut in the v1 order)", fontsize=10, weight="bold")
     fig.text(0.07, 0.875,
         "- Handle: top trimmed, grip raked about 8 degrees and moved back. Trigger: straight 3.8\" bar, pivot moved forward (lighter pull).\n"
-        "- Up-stop: the trigger tail rests on a 10 mm nylon spacer on a button screw, so it can't swing up. HDPE scales on bar and grip.\n"
+        "- Up-stop: the trigger tail rests on a 10 mm nylon spacer on a button screw, so it can't swing up. Grip covers on bar and grip.\n"
         "- v0.7 (after the v1 fit test): collar 0.090\" (1/8\" would not slide under the valve lip). Second handle position for cans\n"
         "  whose ring only fits the BIG HOLE: the handle moves 0.80\" toward the keeper (page 10).\n"
         "- v0.9: NO ANGLE CLIP. The handle plate's 2 tabs drop through slots in the collar, a snap-on hitch pin clip under each.\n"
@@ -241,12 +295,15 @@ with PdfPages(OUT) as pdf:
         "- v0.94 (tighten everything): pivot = clevis pin in 4 lobed holes (no shoulder bolt, can't slip); all 1/4\" holes 0.250\" + ream;\n"
         "  tab slots 0.128\" (was 0.135, 6 deg lean); tab clips pinch the wire with zero play, front tab preloaded 0.004\"; keeper slots\n"
         "  0.198\" and nylon shims under the post heads; shim under the pivot pin head (trigger end play 0.065 -> 0.009).\n"
+        "- v0.95 (comfort): printed U-SLEEVES slide over the trigger bar's front and the grip's back (full round, no aluminum edge on\n"
+        "  the hand); trigger sleeve bows out under the middle/ring fingers. Bar front moved back 0.30\" (top) / 0.10\" (bottom) so the\n"
+        "  squeezed span is 53-55 mm, sized for an average man's hand (188 mm; best span 27-29% of hand length, Lee et al. 2009).\n"
         "- Every moving part is checked open and closed (pages 9-10) and every part pair in 3D with real shapes (page 11).",
         fontsize=7.5, va="top", linespacing=1.6)
-    fig.text(0.07, 0.635, "PARTS PER HANDLE", fontsize=10, weight="bold")
-    fig.text(0.07, 0.625,
+    fig.text(0.07, 0.58, "PARTS PER HANDLE", fontsize=10, weight="bold")
+    fig.text(0.07, 0.57,
         "Laser cut, 5052 aluminum:  collar 0.090\", keeper, frame, trigger 1/8\" (1 each)\n"
-        "Scales, 3D printed PETG 1/4\":  trigger 0.70 x %.2f x2, grip %.2f x %.2f x2 (rectangles)\n"
+        "Sleeves, 3D printed PETG (STL files):  trigger sleeve x1, grip sleeve x1\n"
         "Clevis pin 1/4\" x 1/2\", stainless ......... 2  (pivot, keeper) Rivetsonline CLPF-0250-0500\n"
         "Hitch pin clip, stainless, 0.080\" wire ..... 4  (2 tabs, pivot, keeper) BD #27207\n"
         "1/32\" nylon shim washer ................... 3  (pivot head, 2 keeper posts) TBD\n"
@@ -257,16 +314,16 @@ with PdfPages(OUT) as pdf:
         "10-24 x 5/8\" button-head screw ............ 1  (up-stop)     BD #4396\n"
 
         "1/4\" alum. screw post, 3/16\" barrel ...... 2  (keeper guides) MyBinding SO014ASP\n"
-        "5/8\" alum. screw post, 3/16\" barrel ...... 4  (scales)  MyBinding SO058ASP" % (TS_LEN, GW, GL),
+        "5/8\" alum. screw post, 3/16\" barrel ...... 4  (sleeves) MyBinding SO058ASP",
         fontsize=7.5, va="top", linespacing=1.6, family="monospace")
-    fig.text(0.07, 0.42, "LASER COST, METAL PARTS (SendCutSend, 5052, each, before tax; shipping is free)", fontsize=10, weight="bold")
+    fig.text(0.07, 0.36, "LASER COST, METAL PARTS (SendCutSend, 5052, each, before tax; shipping is free)", fontsize=10, weight="bold")
     rows = ["%-34s %8s %8s %8s %8s" % ("part (v0.93 files, qty 100)", "trigger", "keeper", "frame", "collar"),
             "%-34s %8s %8.2f %8s %8.2f" % ("carlie's quotes 2026-10-25", "-", 2.61, "-", 3.12),
             "%-34s %8.2f %8s %8.2f %8s" % ("old v0.7 quote (not re-quoted yet)", 2.79, "", 3.90, ""),
             "%-34s %8s %8.2f %8s %8s" % ("option: keeper in 0.090\"", "", 2.17, "", "")]
-    fig.text(0.07, 0.407, "\n".join(rows), fontsize=7.5, va="top", family="monospace", linespacing=1.6)
-    fig.text(0.07, 0.33, "Collar 0.090\" (0.100\" is \\$3.33). Keeper, frame and trigger 1/8\". Metal for one handle about \\$13.44 with 8.25% tax.\n"
-             "100 handles, everything (metal, Bolt Depot, Rivetsonline pins, MyBinding posts, printed scales), tax and shipping in:\n"
+    fig.text(0.07, 0.347, "\n".join(rows), fontsize=7.5, va="top", family="monospace", linespacing=1.6)
+    fig.text(0.07, 0.27, "Collar 0.090\" (0.100\" is \\$3.33). Keeper, frame and trigger 1/8\". Metal for one handle about \\$13.44 with 8.25% tax.\n"
+             "100 handles, everything (metal, Bolt Depot, Rivetsonline pins, MyBinding posts, printed sleeves), tax and shipping in:\n"
              "about \\$1,840 (\\$18.40 a handle), ESTIMATE: frame + trigger are the old quote, shims not priced. buy-sheet/BUY-SHEET.md.", fontsize=7.5, va="top", linespacing=1.6)
     pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p0.png"), dpi=80)
 
@@ -277,22 +334,33 @@ with PdfPages(OUT) as pdf:
         (keeper, 2.0, 4.9, "KEEPER (qty 1)",
          "Notch 1.30 dia. 2 guide slots 0.198 wide.\n3 pin holes 0.250 (ream 1/4\"): seat lock, big-hole lock, open.", [], None),
         (trigger, 6.0, 8.3, "TRIGGER (side view, qty 1)",
-         "Flat, no bends. Nose (right) presses button.\nPivot hole 0.250 (ream 1/4\"). 2 holes #7 for the scale posts.", [], pivot_mark),
+         "Flat, no bends. Nose (right) presses button.\nPivot hole 0.250 (ream 1/4\"). 2 holes #7 for the sleeve posts.", [], pivot_mark),
     ])
     f1.savefig(PNG.replace(".png", "-p1.png"), dpi=80)
     f2 = page(pdf, [
         (frame, 6.0, 6.3, "FRAME / HANDLE (side view, qty 1)",
-         "Forward is right. 2 TABS on the bottom drop through the collar slots; a snap-on hitch pin\nclip goes through the small hole in each tab, under the collar. Grip-scale holes #7.", [], frame_marks),
+         "Forward is right. 2 TABS on the bottom drop through the collar slots; a snap-on hitch pin\nclip goes through the small hole in each tab, under the collar. Grip-sleeve holes #7.", [], frame_marks),
     ])
     f2.savefig(PNG.replace(".png", "-p2.png"), dpi=80)
-    ts_flat = box(0, 0, W, TS_LEN).difference(hole(W / 2, 0.60, D7)).difference(hole(W / 2, TS_LEN - 0.60, D7))
-    gs_flat = box(0, 0, GW, GL).difference(hole(GW / 2, 0.60, D7)).difference(hole(GW / 2, GL - 0.60, D7))
+    def hang(gm, ang):            # rotate so the long axis runs down the page, top-left corner at (0, 0)
+        gm = affinity.rotate(gm, ang, origin=(0, 0))
+        return affinity.translate(gm, -gm.bounds[0], -gm.bounds[3])
+    ts_up = hang(trig_sleeve, -90 - math.degrees(math.atan2(uz, ux)))
+    gs_up = hang(grip_sleeve, -90 - math.degrees(math.atan2(guz, gux)))
     f2b = page(pdf, [
-        (ts_flat, 1.0, 3.5, "TRIGGER SCALE: printed PETG 1/4\", 0.70 x %.2f, qty 2" % TS_LEN,
-         "Plain rectangle, printed flat. Holes #7 (0.201)\nprinted in; 1:1 outline for checking the print.", [], None),
-        (gs_flat, 4.8, 3.5, "GRIP SCALE: printed PETG 1/4\", %.2f x %.2f, qty 2" % (GW, GL),
-         "Plain rectangle, printed flat.\nHoles #7 on the centerline, 0.60\" from each end.", [], None),
-    ])
+        (ts_up, 1.0, 9.6, "TRIGGER SLEEVE (side, 1:1), printed PETG, qty 1",
+         "Front (fingers) is right; it bows out under the middle\nand ring fingers. Open on the left: it slides onto the\nbar's front edge. 2 holes #7 for the screw posts.", [], None),
+        (gs_up, 4.0, 9.6, "GRIP SLEEVE (side, 1:1), printed PETG, qty 1",
+         "Back (palm) is left, open on the right: it slides\nonto the plate's back edge and wraps under the\nbottom. 2 holes #7 for the screw posts.", [], None),
+        (hang(TRIG_SEC, 0), 1.0, 4.4, "TRIGGER SLEEVE SECTION (1:1, at the bow)",
+         "5/8\" thick, full round on the finger side.\nSlot %.3f\" for the 1/8\" bar. Front wall %.2f\"\nat the ends, %.2f\" at the bow." % (SLV_SLOT, SLV_T, SLV_T + BOW), [], None),
+        (hang(GRIP_SEC, 0), 4.0, 4.4, "GRIP SLEEVE SECTION (1:1)",
+         "Full round on the palm side, %.2f\" wall\nover the plate edge. Slot %.3f\"." % (SLV_T, SLV_SLOT), [], None),
+    ], note="PRINTING (Bambu, PETG): print each sleeve standing on its open side (trigger: open back down; grip: open front down),\n"
+             "so the round faces up and nothing needs supports. 100%% infill or 6+ walls in the side walls (the posts clamp them).\n"
+             "Matte or textured surface, not glossy. Holes print at #7 (0.201\"); the slot prints at %.3f\" so it slides over the 0.125\" plate.\n"
+             "STL files (millimeters): trigger-sleeve-v0.95.stl, grip-sleeve-v0.95.stl, and the 4 plates at real thickness for the plastic test\n"
+             "build (collar-0.090in, keeper/frame/trigger-0.125in, print flat). Check each print against the 1:1 pages before assembly." % SLV_SLOT)
     f2b.savefig(PNG.replace(".png", "-p2b.png"), dpi=80)
 
     # ---------- Assembly pages (side + top view, 1:1) ----------
@@ -336,9 +404,9 @@ with PdfPages(OUT) as pdf:
     fill(ax, box(-0.875, 0, 0.875, 0.125), ox, oy, "#c9e6c3", z=3)
     for x0, x1 in TABS:
         ax.add_patch(plt.Circle((ox + (x0 + x1) / 2, oy + PIN_Z), PIN_D / 2, fc="#555555", ec="k", lw=0.4, zorder=4))
-    fill(ax, affinity.translate(grip_scale, 0, 0), ox, oy, "#3a3a3a", z=3)
+    fill(ax, affinity.translate(grip_sleeve, 0, 0), ox, oy, "#3a3a3a", z=3)
     fill(ax, trig_on, ox, oy, "#bfbfbf", z=5)
-    fill(ax, affinity.translate(trig_scale, *P), ox, oy, "#3a3a3a", z=5.5)
+    fill(ax, affinity.translate(trig_sleeve, *P), ox, oy, "#3a3a3a", z=5.5)
     for x, z in SCALE_HOLES:
         ax.add_patch(plt.Circle((ox + P[0] + x, oy + P[1] + z), 0.14, fc="#bbbbbb", ec="k", lw=0.5, zorder=6))
     for x, z in GRIP_HOLES:
@@ -352,8 +420,8 @@ with PdfPages(OUT) as pdf:
     lab(ax, ox + 0.0, oy + 1.0, ox + 0.4, oy + 2.2, "trigger NOSE rests on top of button")
     lab(ax, ox + TABS[1][0], oy - 0.2, ox - 1.9, oy - 1.3, "2 TABS through the collar,\nhitch pin clip under each")
     lab(ax, ox + S[0], oy + S[1] + 0.19, ox - 4.6, oy + 2.3, "UP-STOP: nylon spacer on a button screw, the trigger tail rests on it")
-    lab(ax, ox - 4.7, oy - 2.6, ox - 6.0, oy - 1.4, "HANDLE / FRAME plate\n(grip: printed PETG scales\nboth sides, 2 screw posts)")
-    lab(ax, ox - 2.5, oy - 2.2, ox - 2.1, oy - 4.3, "TRIGGER bar: 1/8\" plate with printed PETG scales\nboth sides (5/8\" thick), 2 screw posts.\nWhole hand pulls it back = nose pushes button down")
+    lab(ax, ox - 4.7, oy - 2.6, ox - 6.0, oy - 1.4, "HANDLE / FRAME plate\n(grip: printed PETG\nsleeve over the back\nedge, 2 screw posts)")
+    lab(ax, ox - 2.5, oy - 2.2, ox - 2.1, oy - 4.3, "TRIGGER bar: 1/8\" plate with a printed PETG sleeve\nover its front edge (5/8\" round), 2 screw posts.\nWhole hand pulls it back = nose pushes button down")
     ax.text(0.5, 0.9, "Can drawn as a 65 mm (2-9/16\") Rust-Oleum can. Button 5/8\" above the valve ring.", fontsize=6.5)
     pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p3.png"), dpi=80)
 
@@ -371,12 +439,10 @@ with PdfPages(OUT) as pdf:
     fill(ax, box(frame.bounds[0], 0.095, -0.80, 0.22), ox, oy, "#f3d9b1", z=4)
     tb = trig_on.bounds
     fill(ax, box(tb[0], TY0, tb[2], TY1), ox, oy, "#bfbfbf", z=5)
-    tsb = affinity.translate(trig_scale, *P).bounds
-    for y0, y1 in ((TY0 - HDPE, TY0), (TY1, TY1 + HDPE)):
-        fill(ax, box(tsb[0], y0, tsb[2], y1), ox, oy, "#3a3a3a", z=5)
-    gsb = grip_scale.bounds
-    for y0, y1 in ((0.095 - HDPE, 0.095), (0.22, 0.22 + HDPE)):
-        fill(ax, box(gsb[0], y0, gsb[2], y1), ox, oy, "#3a3a3a", z=4)
+    tsb = affinity.translate(trig_sleeve, *P).bounds
+    fill(ax, box(tsb[0], TY0 - HDPE, tsb[2], TY1 + HDPE), ox, oy, "#3a3a3a", z=5)          # v0.95 sleeve wraps the bar
+    gsb = grip_sleeve.bounds
+    fill(ax, box(gsb[0], 0.095 - HDPE, gsb[2], 0.22 + HDPE), ox, oy, "#3a3a3a", z=4)
     fill(ax, box(P[0] - 0.10, -0.20, P[0] + 0.10, 0.10), ox, oy, "#555555", z=6)
     fill(ax, box(S[0] - 0.10, -0.20, S[0] + 0.10, 0.10), ox, oy, "#555555", z=6)
     lab(ax, ox + 0.45, oy + 0.45, ox - 0.3, oy + 2.4, "valve ring sits in the keyhole SEAT\n(center of the can)")
@@ -399,7 +465,7 @@ with PdfPages(OUT) as pdf:
              "4. Push a hitch pin clip through the hole in each tab under the collar until its bent leg snaps around the tab. No bolts.\n"
              "5. Trigger on the right side of the handle: clevis pin (shim under its head) through trigger, nylon washer, a pivot lobe; clip.\n"
              "6. Up-stop: button screw through the nylon spacer and the up-stop slot from the trigger side, #10 washer + locknut on the far side.\n"
-             "7. Scales: one each side of the trigger bar and of the grip, a 5/8\" screw post through each hole.\n"
+             "7. Sleeves: slide one onto the trigger bar's front edge and one onto the grip's back edge, a 5/8\" screw post through each hole.\n"
              "8. Turn the button so the nozzle points forward. Pick the pivot lobe where the nose just touches the button.\n"
              "    Then slide the up-stop up under the tail until it touches, tighten. The trigger now can't flip up.\n"
              "For a first rough fit, any bolt works as the pivot and a bent nail works as a pin.")
@@ -481,12 +547,19 @@ with PdfPages(OUT) as pdf:
     fig, ax = newpage("TRIGGER DETAIL: rest vs. full squeeze, and sections (not templates)",
         "Side view 1:1. Solid gray = trigger at rest (tail on the up-stop). Dashed = full squeeze, drawn for a button that moves %.2f\".\n"
         "The button bottoming out ends the squeeze, so the trigger never reaches the grip. Only the up-stop is a hard stop." % BT)
-    ox, oy = 6.9, 7.6
+    ox, oy = 6.9, 7.8
     grip_front = LineString([(-3.55, -0.50), (-4.20, -4.55)])
     rest = trig_on
     full = affinity.rotate(trig_on, -th, origin=P)
     fill(ax, frame, ox, oy, "#f6e6cc", ec="#b9a07a", z=1)
     fill(ax, rest, ox, oy, "#bfbfbf", z=3)
+    fill(ax, grip_sleeve, ox, oy, "#3a3a3a", alpha=0.85, z=2)
+    sl_rest = affinity.translate(trig_sleeve, *P)
+    sl_full = affinity.rotate(sl_rest, -th, origin=P)
+    fill(ax, sl_rest, ox, oy, "#3a3a3a", alpha=0.85, z=3.5)
+    for ring in [sl_full.exterior]:
+        x, y = ring.xy
+        ax.plot([v + ox for v in x], [v + oy for v in y], "k--", lw=0.7, zorder=4)
     for ring in [full.exterior] + list(full.interiors):
         x, y = ring.xy
         ax.plot([v + ox for v in x], [v + oy for v in y], "k--", lw=0.7, zorder=4)
@@ -495,29 +568,34 @@ with PdfPages(OUT) as pdf:
     ax.add_patch(plt.Circle((ox + S[0], oy + S[1]), STOP_R, fc="#c0392b", ec="k", lw=0.5, zorder=6))
     g_rest, g_full = rest.distance(grip_front), full.distance(grip_front)
     lab(ax, ox + S[0], oy + S[1] - 0.12, ox - 5.9, oy + 0.2, "UP-STOP: 10 mm nylon spacer on a\nbutton screw. The tail rests on it, so\nthe trigger can't swing up past the button.")
-    lab(ax, ox + P[0] + NOSE, oy + P[1] - 0.45, ox + 0.2, oy + 1.9, "nose: %.2f\" down at full squeeze" % BT)
-    lab(ax, ox - 3.05, oy - 3.9, ox - 1.6, oy - 3.3,
-        "gap to grip: %.2f\" at rest, %.2f\" at full squeeze\n(bottom of the bar moves about %.0fx the button travel)" % (g_rest, g_full, (g_rest - g_full) / BT))
-    ax.text(0.5, 2.85, "Grip span (back of grip to the trigger bar) is about 2-1/2\" at rest. Straight bar, 3.8\" long, room for 4 fingers.\n"
-            "The finger bar wears 1/4\" printed PETG rectangles on both sides (5/8\" thick overall). No coating.", fontsize=6.5)
+    lab(ax, ox + P[0] + NOSE, oy + P[1] - 0.45, ox + 0.2, oy + 1.9, "nose: %.2f\" down\nat full squeeze" % BT)
+    lab(ax, ox - 2.95, oy - 3.95, ox - 1.75, oy - 4.25,
+        "gap to grip: %.2f\" at rest, %.2f\" at full squeeze\n(closest point, metal bar to the grip's front edge)" % (g_rest, g_full))
+    def span_at(sc, z):           # level span, back of the grip sleeve to the front of the trigger sleeve, mm
+        cut = lambda gm: gm.intersection(LineString([(-9, z), (9, z)])).bounds
+        return (cut(sc)[2] - cut(grip_sleeve)[0]) * 25.4
+    for (z, nm) in zip(FINGER_Z, ("index", "middle", "ring", "little")):
+        ax.plot([ox + grip_sleeve.bounds[0] - 0.1, ox + sl_rest.bounds[2] + 0.1], [oy + z, oy + z], ":", color="#2e7d32", lw=0.6, zorder=7)
+        ax.text(ox + sl_rest.bounds[2] + 0.15, oy + z - 0.04, "%s: %.0f mm rest, %.0f mm squeezed" % (nm, span_at(sl_rest, z), span_at(sl_full, z)),
+                fontsize=5.5, color="#2e7d32", zorder=7)
+    ax.text(0.5, 3.1, "GRIP SPAN (green lines, level, back of the grip sleeve to the front of the trigger sleeve). Lee et al. 2009 (46 men): 50-55 mm\n"
+            "grips strongest and most comfortable (about 27-29% of hand length), and the middle/ring fingers want the widest span. Sized for\n"
+            "an average man's hand (188 mm): squeezed span 53-55 mm, widest at the middle/ring fingers. Dark = printed sleeves (dashed = squeezed).", fontsize=6.5, va="top")
 
-    # Section A-A: through the trigger bar, looking down (2x)
+    # Section A-A: through the trigger sleeve at a post, looking down (2x). n (forward) to the right, y up.
     K2 = 2.0
     def rr(x0, y0, w, h, fc, ec="k", hatch=None):
         ax.add_patch(plt.Rectangle((x0, y0), w * K2, h * K2, fc=fc, ec=ec, lw=0.6, hatch=hatch, zorder=3))
-    sx, sy = 0.9, 0.95
-    ax.text(0.5, 2.45, "SECTION A-A through a scale post, looking down (2x size)", fontsize=8, weight="bold")
-    rr(sx + K2 * 0.255, sy - K2 * 0.04, 0.19, 2 * HDPE + 0.125 + 0.08, "#c9c9c9")             # screw post barrel
-    rr(sx, sy, 0.70, HDPE, "#3a3a3a")                                         # scale, frame side
-    rr(sx, sy + K2 * HDPE, 0.70, 0.125, "#bfbfbf", hatch="////")              # trigger plate
-    rr(sx, sy + K2 * (HDPE + 0.125), 0.70, HDPE, "#3a3a3a")                   # scale, outboard
-    rr(sx + K2 * 0.19, sy + K2 * (2 * HDPE + 0.125), 0.32, 0.05, "#888888")                # post head
-    rr(sx + K2 * 0.19, sy - K2 * 0.05, 0.32, 0.05, "#888888")                 # screw head
-    ax.text(sx + K2 * 0.80, sy + K2 * 0.48, "printed scale 1/4\" (outboard)", fontsize=6)
-    ax.text(sx + K2 * 0.80, sy + K2 * 0.29, "TRIGGER plate 1/8\"", fontsize=6)
-    ax.text(sx + K2 * 0.80, sy + K2 * 0.10, "printed scale 1/4\" (frame side)", fontsize=6)
-    ax.text(sx + K2 * 0.80, sy - K2 * 0.12, "5/8\" aluminum screw post (3/16\" barrel)", fontsize=6)
-    ax.text(sx, sy - K2 * 0.30, "Fingers wrap a 5/8\" thick bar: plate plus two scales.", fontsize=6)
+    sx, sy = 0.9 + K2 * W, 0.95 + K2 * SLV_R
+    ax.text(0.5, 2.45, "SECTION A-A through the trigger sleeve at a post, looking down (2x size)", fontsize=8, weight="bold")
+    fill(ax, affinity.scale(TRIG_SEC, K2, K2, origin=(0, 0)), sx, sy, "#3a3a3a", z=2)
+    rr(sx - K2 * W, sy - K2 * 0.0625, W, 0.125, "#bfbfbf", hatch="////")                      # trigger plate in the slot
+    rr(sx - K2 * (W / 2 + 0.094), sy - K2 * (SLV_R + 0.03), 0.1875, 2 * SLV_R + 0.06, "#c9c9c9")   # screw post barrel
+    rr(sx - K2 * (W / 2 + 0.16), sy + K2 * SLV_R, 0.32, 0.05, "#888888")                   # post head
+    rr(sx - K2 * (W / 2 + 0.16), sy - K2 * (SLV_R + 0.05), 0.32, 0.05, "#888888")          # screw head
+    ax.text(sx + K2 * (SLV_T + BOW) + 0.1, sy + 0.25, "finger side: full round,\n5/8\" across", fontsize=6)
+    ax.text(sx + K2 * (SLV_T + BOW) + 0.1, sy - 0.12, "front wall %.2f-%.2f\"" % (SLV_T, SLV_T + BOW), fontsize=6)
+    ax.text(sx - K2 * W, sy - K2 * SLV_R - 0.33, "TRIGGER plate 1/8\" in a %.3f\" slot (open toward the grip);\n5/8\" aluminum screw post clamps the sleeve walls." % SLV_SLOT, fontsize=6)
 
     # Up-stop stack, looking down (2x)
     tx, ty = 4.9, 0.7
@@ -583,10 +661,11 @@ with PdfPages(OUT) as pdf:
         P2 = (P[0], P[1] + dz)
         rest = affinity.translate(trigger, *P2)
         full = affinity.rotate(rest, -math.degrees(BT / NOSE), origin=P2)
-        sc_rest = affinity.translate(trig_scale, *P2)
+        sc_rest = affinity.translate(trig_sleeve, *P2)
         sc_full = affinity.rotate(sc_rest, -math.degrees(BT / NOSE), origin=P2)
         for st, sc in (("REST", sc_rest), ("FULL", sc_full)):
-            rows.setdefault((st, "frame-side trigger scale clears the handle"), []).append((sc.distance(frame), sc.distance(frame) > 0.1))
+            rows.setdefault((st, "trigger sleeve clears the handle plate"), []).append((sc.distance(frame), sc.distance(frame) > 0.1))
+            rows.setdefault((st, "trigger sleeve clears the grip sleeve"), []).append((sc.distance(grip_sleeve), sc.distance(grip_sleeve) > 0.1))
         if dz == 0.0:
             stop = Point(S).buffer(STOP_R, 64)
             chk("Trigger", "REST", "tail sits on the up-stop spacer", rest.distance(stop), rest.distance(stop) < 0.01)
@@ -594,7 +673,7 @@ with PdfPages(OUT) as pdf:
             chk("Trigger", "REST", "nose bump touches the button top (0.765)", nose_low - 0.765, abs(nose_low - 0.765) < 0.01)
             chk("Trigger", "FULL", "tail lifts off the up-stop", full.distance(stop), full.distance(stop) > 0.02)
             chk("Up-stop", "REST", "spacer longer than trigger + nylon washer (0.125 + 0.060)", 0.197 - 0.185, 0.197 > 0.185)
-        for st, t in (("REST", rest), ("FULL", full)):
+        for st, t in (("REST", rest.union(sc_rest)), ("FULL", full.union(sc_full))):
             for what, val, lim in (("clears the collar", t.distance(collar_side), 0.05),
                                    ("gap to grip (must stay open)", t.distance(grip_front), 0.1),
                                    ("finger room to the can", t.distance(can_side), 0.4)):
@@ -612,6 +691,18 @@ with PdfPages(OUT) as pdf:
         return min(2 * Polygon(i).exterior.distance(Polygon(i).centroid) if Polygon(i).area < 0.2 else 1.0 for i in g.interiors)
     mh = min(min_hole(collar) - CT, min_hole(keeper) - 0.125, min_hole(frame) - 0.125, min_hole(trigger) - 0.125)
     chk("Cutting", "ALL", "every hole/slot at least the sheet thickness (SendCutSend minimum)", max(mh, 0.0), mh >= -0.0005)
+    # v0.95 sleeves and grip span
+    ch = trig_sleeve.intersection(trigger).difference(along_bar(TS0 - 0.2, L + 0.2, W + 0.002))
+    chk("Sleeves", "ALL", "trigger sleeve slides on: no metal in its channel but the bar", ch.area, ch.area < 1e-6, unit=" sq in")
+    def spans(ang):                # level span, back of the grip sleeve to the front of the trigger sleeve, per finger (mm)
+        sc = affinity.rotate(affinity.translate(trig_sleeve, *P), ang, origin=P)
+        cut = lambda gm, z: gm.intersection(LineString([(-9, z), (9, z)])).bounds
+        return [(cut(sc, z)[2] - cut(grip_sleeve, z)[0]) * 25.4 for z in FINGER_Z]
+    sp = spans(-math.degrees(BT / NOSE))
+    chk("Grip", "FULL", "span index/middle/ring/little %s mm (target 51-55, Lee 2009)" % "/".join("%.0f" % v for v in sp),
+        None, all(50.5 <= v <= 55.5 for v in sp) and max(sp[1:3]) >= max(sp[0], sp[3]))
+    sp = spans(0.0)
+    chk("Grip", "REST", "span index/middle/ring/little %s mm (opens as the trigger rests)" % "/".join("%.0f" % v for v in sp), None, max(sp) < 68)
     neck = 2 * math.sqrt((DF / 2) ** 2 - (min(b - a for a, b in zip(PIV, PIV[1:])) / 2) ** 2)
     chk("Pivot", "ALL", "pin can't slide between lobes (neck vs 0.250 pin)", neck, neck < DF - 0.04)
     lobes = shapely.ops.unary_union([hole(P[0], P[1] + dz, DF) for dz in PIV])
@@ -621,7 +712,7 @@ with PdfPages(OUT) as pdf:
         P2 = (P[0], P[1] + dz)
         for st, ang in (("REST", 0.0), ("FULL", -math.degrees(BT / NOSE))):
             t = affinity.rotate(affinity.translate(trigger, *P2), ang, origin=P2).union(
-                affinity.rotate(affinity.translate(trig_scale, *P2), ang, origin=P2))
+                affinity.rotate(affinity.translate(trig_sleeve, *P2), ang, origin=P2))
             rows.setdefault((st, "clears the tabs + clips"), []).append(
                 (min(t.distance(g) for g in tab_geoms + pins), min(t.distance(g) for g in tab_geoms + pins) > 0.1))
     for (st, what), vals in sorted(rows.items(), key=lambda kv: (kv[0][1], kv[0][0] != "REST")):
@@ -652,7 +743,7 @@ with PdfPages(OUT) as pdf:
                 if fp is not None:
                     trig_ps.append(fp)
                 for side in (1, -1):
-                    sc = affinity.rotate(affinity.translate(trig_scale, *P2), ang, origin=P2)
+                    sc = affinity.rotate(affinity.translate(trig_sleeve, *P2), ang, origin=P2)
                     y0, y1 = (TY1, TY1 + HDPE) if side > 0 else (TY0 - HDPE, TY0)
                     fp = footprint(sc, dy, y0, y1)
                     if fp is not None:
@@ -673,7 +764,7 @@ with PdfPages(OUT) as pdf:
         chk("Keeper", name + " OPEN", "ring clears the keeper", k_open_m.distance(ring), k_open_m.distance(ring) > 0.02)
         trig_p = shapely.ops.unary_union(trig_ps) if trig_ps else None
         for st, kk in (("LOCK", k_closed_m), ("OPEN", k_open_m)):
-            others = {"handle plate": frame_p, "trigger + scales": trig_p}
+            others = {"handle plate": frame_p, "trigger + sleeve": trig_p}
             for what, gg in others.items():
                 if gg is None:
                     continue
@@ -689,8 +780,8 @@ with PdfPages(OUT) as pdf:
         "Each moving part is drawn and measured at both ends of its travel, so the mechanism is proven on paper before it's cut.\n"
         "Top row: keeper OPEN and CLOSED from above (1:1). Dashed circle = valve ring. Table: clearances computed from the template outlines.\n"
         "Trigger FULL is drawn for a button that moves %.2f\" (BT in templates.py); the gap to the grip stays open with any normal button." % BT)
-    for (kx, ky, kk, ring, ttl) in ((2.3, 8.0, k_open, ring_big, "KEEPER OPEN: slid out to the slot ends,\nring comes up through the big hole"),
-                                    (6.0, 8.0, k_closed, ring_seat, "KEEPER CLOSED: slot ends stop it with the\nnotch on the ring, pin in")):
+    for (kx, ky, kk, ring, ttl) in ((2.3, 8.2, k_open, ring_big, "KEEPER OPEN: slid out to the slot ends,\nring comes up through the big hole"),
+                                    (6.0, 8.2, k_closed, ring_seat, "KEEPER CLOSED: slot ends stop it with the\nnotch on the ring, pin in")):
         fill(ax, collar, kx, ky, "#9ec5ea", z=1)
         fill(ax, kk, kx, ky, "#c9e6c3", alpha=0.85, z=2)
         x, y = ring.exterior.xy
@@ -699,7 +790,7 @@ with PdfPages(OUT) as pdf:
         for gx, gy in GUIDES:
             ax.add_patch(plt.Circle((kx + gx, ky - gy), 0.219, fc="#cfcfd4", ec="k", lw=0.5, zorder=5))
         ax.text(kx - 1.7, ky + 1.35, ttl, fontsize=7, weight="bold")
-    y0, dy_ = 3.75, 0.098
+    y0, dy_ = 3.7, 0.091
     ax.text(0.5, y0 + 0.2, "PART      STATE    CHECK", fontsize=6.5, weight="bold", family="monospace")
     for i, (part, st, what, val, res) in enumerate(checks):
         yy = y0 - dy_ * i

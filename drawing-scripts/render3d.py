@@ -10,9 +10,9 @@ g = {}; exec(src, g)
 collar, keeper, frame, trigger = g["collar"], g["keeper"], g["frame"], g["trigger"]
 P, S = g["P"], g["S"]
 trig = affinity.translate(trigger, *P)
-tsc = affinity.translate(g["trig_scale"], *P)
-gsc = g["grip_scale"]
 HD = g["HDPE"]
+import sleeves as SL                                    # v0.95: printed sleeves as real solids
+TSL, GSL = SL.tris(SL.world_trigger_sleeve(g)), SL.tris(SL.world_grip_sleeve(g))
 TS = g["collar_holes"][0][1]   # keeper lock pin y
 T = 0.125
 
@@ -53,6 +53,7 @@ def revolve(profile, pid, col, n=72, axis="z", center=(0, 0, 0)):
 
 COLORS = dict(collar=(0.55, 0.74, 0.92), keeper=(0.62, 0.84, 0.58), frame=(0.93, 0.78, 0.55),
               clip=(0.70, 0.70, 0.72), trigger=(0.45, 0.45, 0.48), can=(0.86, 0.86, 0.86), ring=(0.75, 0.75, 0.75), button=(0.98, 0.98, 0.98))
+SLEEVE = (0.30, 0.30, 0.33)   # printed PETG sleeves (dark, but light enough to show the round)
 STEEL, DARK, NYLON, BLACKNY, ALUM = (0.66, 0.67, 0.70), (0.18, 0.18, 0.20), (0.95, 0.94, 0.88), (0.16, 0.16, 0.17), (0.82, 0.82, 0.85)
 CT, TY0, TY1 = g["CT"], g["TY0"], g["TY1"]
 SR = g["STOP_R"]
@@ -70,8 +71,8 @@ HW = {
     7: ("#10 flat washer", "Bolt Depot #2946", 1, "up-stop nut"),
     8: ("Clevis pin 1/4\" x 1/2\", stainless", "Rivetsonline CLPF-0250-0500", 1, "keeper lock, down through keeper + collar"),
     9: ("Hitch pin clip, stainless, 0.080\" wire", "Bolt Depot #27207", 1, "through the clevis pin, under the collar"),
-    10: ("Screw post, barrel half, 3/16\" x 5/8\"", "MyBinding SO058ASP", 4, "scales (head on the outside)"),
-    11: ("Screw post, screw half", "MyBinding SO058ASP", 4, "scales (head on the inside)"),
+    10: ("Screw post, barrel half, 3/16\" x 5/8\"", "MyBinding SO058ASP", 4, "sleeves (head on the outside)"),
+    11: ("Screw post, screw half", "MyBinding SO058ASP", 4, "sleeves (head on the inside)"),
     12: ("Screw post, barrel half, 3/16\" x 1/4\"", "MyBinding SO014ASP", 2, "keeper guides (head under the collar)"),
     13: ("Screw post, screw half (1/4\" post)", "MyBinding SO014ASP", 2, "keeper guides (head on the keeper)"),
     14: ("Hitch pin clip, stainless, 0.080\" wire", "Bolt Depot #27207", 1, "through the pivot pin, outside the handle"),
@@ -227,7 +228,7 @@ def build(explode=0.0, show_can=True, show_trigger=True, show_hw=True):
     def O(dx=0.0, dy=0.0, dz=0.0):
         return (dx * e, dy * e, dz * e)
     OFF = dict(collar=O(dz=-0.9), keeper=O(dz=0.45), clip=O(dy=0.75, dz=0.75), trigger=O(dy=-1.35),
-               tsc_out=O(dy=-1.95), tsc_in=O(dy=-0.75), gsc_in=O(dy=-0.55), gsc_out=O(dy=0.55))
+               tsc_out=O(dx=0.8, dy=-1.35), gsc_out=O(dx=-0.8))   # v0.95: sleeves slide off their plate edge (trigger forward, grip back)
     if show_can and e == 0:
         revolve([(0, -3.6), (1.28, -3.6), (1.28, -0.95), (1.15, -0.85), (1.0, -0.65), (0.75, -0.35), (0.6, -0.15), (0.53, -0.13), (0, -0.13)], 1, COLORS["can"])
         revolve([(0, 0), (0.64, 0), (0.64, 0.14), (0, 0.14)], 2, COLORS["ring"])
@@ -235,12 +236,12 @@ def build(explode=0.0, show_can=True, show_trigger=True, show_hw=True):
     extrude(collar, "xy", -CT, 0, 10, COLORS["collar"], off=OFF["collar"])
     extrude(keeper, "xy", 0, 0.125, 11, COLORS["keeper"], off=OFF["keeper"])
     extrude(frame, "xz", FY0, FY1, 12, COLORS["frame"])
-    extrude(gsc, "xz", FY1, FY1 + HD, 18, (0.16, 0.16, 0.17), off=OFF["gsc_out"])
-    extrude(gsc, "xz", FY0 - HD, FY0, 19, (0.16, 0.16, 0.17), off=OFF["gsc_in"])
+    for t in GSL:
+        add_tri(*[tuple(v + np.array(OFF["gsc_out"])) for v in t], 18, SLEEVE)
     if show_trigger:
         extrude(trig, "xz", TY0, TY1, 14, COLORS["trigger"], off=OFF["trigger"])
-        extrude(tsc, "xz", TY1, TY1 + HD, 16, (0.16, 0.16, 0.17), off=OFF["tsc_in"])
-        extrude(tsc, "xz", TY0 - HD, TY0, 17, (0.16, 0.16, 0.17), off=OFF["tsc_out"])
+        for t in TSL:
+            add_tri(*[tuple(v + np.array(OFF["tsc_out"])) for v in t], 16, SLEEVE)
     if not show_hw:
         return
     pid = [100]
@@ -277,15 +278,15 @@ def build(explode=0.0, show_can=True, show_trigger=True, show_hw=True):
     for (x0, x1), z in zip(g["TABS"], g["PIN_ZS"]):
         x, zb = (x0 + x1) / 2, g["TAB_BOT"] - 0.045
         add(5, "tab pin", (x, FY1 + 0.10, z), lambda p, ox, oy, oz, x=x, z=z, zb=zb: hw_rclip(x + ox, z + oz, zb + oz, FY1 + 0.12 + oy, -1, p), O(dy=1.3))
-    # scales: barrel half from outside, screw half from inside
+    # sleeves: barrel half from outside, screw half from inside
     if show_trigger:
         for hx, hz in g["SCALE_HOLES"]:
             x, z = hx + px, hz + pz
-            add(10, "trigger scales", (x, TY0 - HD - 0.06, z), lambda p, ox, oy, oz, x=x, z=z: hw_post_barrel("y", x + ox, 0, z + oz, TY0 - HD + oy, 1, p), O(dy=-2.55))
-            add(11, "trigger scales", (x, TY1 + HD + 0.06, z), lambda p, ox, oy, oz, x=x, z=z: hw_post_screw("y", x + ox, 0, z + oz, TY1 + HD + oy, -1, p), O(dy=-0.25))
+            add(10, "trigger sleeve", (x, TY0 - HD - 0.06, z), lambda p, ox, oy, oz, x=x, z=z: hw_post_barrel("y", x + ox, 0, z + oz, TY0 - HD + oy, 1, p), O(dy=-2.55))
+            add(11, "trigger sleeve", (x, TY1 + HD + 0.06, z), lambda p, ox, oy, oz, x=x, z=z: hw_post_screw("y", x + ox, 0, z + oz, TY1 + HD + oy, -1, p), O(dy=-0.25))
     for x, z in g["GRIP_HOLES"]:
-        add(10, "grip scales", (x, FY1 + HD + 0.06, z), lambda p, ox, oy, oz, x=x, z=z: hw_post_barrel("y", x + ox, 0, z + oz, FY1 + HD + oy, -1, p), O(dy=1.1))
-        add(11, "grip scales", (x, FY0 - HD - 0.06, z), lambda p, ox, oy, oz, x=x, z=z: hw_post_screw("y", x + ox, 0, z + oz, FY0 - HD + oy, 1, p), O(dy=-1.1))
+        add(10, "grip sleeve", (x, FY1 + HD + 0.06, z), lambda p, ox, oy, oz, x=x, z=z: hw_post_barrel("y", x + ox, 0, z + oz, FY1 + HD + oy, -1, p), O(dy=1.1))
+        add(11, "grip sleeve", (x, FY0 - HD - 0.06, z), lambda p, ox, oy, oz, x=x, z=z: hw_post_screw("y", x + ox, 0, z + oz, FY0 - HD + oy, 1, p), O(dy=-1.1))
 
 
 # ---------- rasterizer ----------
@@ -408,7 +409,7 @@ if __name__ == "__main__":
     with PdfPages(out) as pdf:
         fig = plt.figure(figsize=(8.5, 11))
         fig.text(0.06, 0.965, "3D VIEWS: assembled on a can", fontsize=11, weight="bold")
-        fig.text(0.06, 0.95, "Blue = collar, green = keeper, tan = handle plate (2 tabs through the collar), dark gray = trigger, near-black = printed PETG scales.\n"
+        fig.text(0.06, 0.95, "Blue = collar, green = keeper, tan = handle plate (2 tabs through the collar), dark gray = trigger, charcoal = printed PETG sleeves.\n"
                  "Hardware: steel = stainless bolts, nuts and hitch pin clips, white = nylon washer, black = nylon spacer, silver = aluminum screw posts.\n"
                  "Red balloons = hardware number (list at the bottom, and the exploded views on the next pages).", fontsize=7, va="top")
         build()
@@ -461,4 +462,17 @@ if __name__ == "__main__":
             img, info = render(el, az, fit_ids=ids, margin=0.12)
             panel(fig, [0.03, 0.47 - 0.43 * k, 0.94, 0.41], img, info, cap, [], min_px=150, only=(8, 9, 12, 13))
         pdf.savefig(fig); fig.savefig(out.replace(".pdf", "-p2k.png"), dpi=110)
+
+        fig = plt.figure(figsize=(8.5, 11))
+        fig.text(0.06, 0.965, "PRINTED SLEEVES CLOSE-UP (can hidden)", fontsize=11, weight="bold")
+        fig.text(0.06, 0.95, "v0.95: one printed PETG sleeve slides onto the FRONT edge of the trigger bar (where the fingers pull) and one onto the BACK edge\n"
+                 "of the grip (where the palm pushes). Each is a full round across the 5/8\" thickness, so no aluminum edge touches the hand. The trigger\n"
+                 "sleeve bows out under the middle and ring fingers. 2 screw posts (10 + 11) through each sleeve and its plate hold it on.", fontsize=7, va="top")
+        for k, (ex, el, az, cap) in enumerate(((0.0, -28, -20, "Assembled, from in front and below: the round finger side of the trigger sleeve, closed bottom ends"),
+                                               (1.0, -10, -55, "Pulled apart, from in front: trigger sleeve slides forward off the bar, grip sleeve slides back off the plate"))):
+            build(explode=ex, show_can=False)
+            ids = [16, 18] + [p for p, n, j, a in INST if j in ("trigger sleeve", "grip sleeve")]
+            img, info = render(el, az, fit_ids=ids, margin=0.10)
+            panel(fig, [0.03, 0.47 - 0.43 * k, 0.94, 0.41], img, info, cap, [], min_px=150, only=(10, 11))
+        pdf.savefig(fig); fig.savefig(out.replace(".pdf", "-p2s.png"), dpi=110)
     print("ok")

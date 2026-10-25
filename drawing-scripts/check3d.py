@@ -1,6 +1,6 @@
-# Real-shape clearance check: builds the same 3D model as render3d.py (plates, scales, the can, every bolt, nut, washer,
+# Real-shape clearance check: builds the same 3D model as render3d.py (plates, sleeves, the can, every bolt, nut, washer,
 # pin and clip) and measures the gap between every pair of bodies by sampling their actual surfaces.
-# Pairs that touch on purpose (a bolt in its hole, a scale on its plate, the tabs in their slots) are listed as "by design";
+# Pairs that touch on purpose (a bolt in its hole, a sleeve on its plate, the tabs in their slots) are listed as "by design";
 # every other pair must keep at least MIN_GAP.
 # Usage: python3 check3d.py templates.py [page.pdf]  -> prints the table; with a pdf name it also draws the page.
 import sys, math
@@ -14,17 +14,17 @@ STEP = 0.012      # surface sample spacing, inches (gaps read about this much hi
 NEAR = 0.25       # pairs further apart than this are not listed
 MIN_GAP = 0.03    # smallest allowed gap between parts that are not meant to touch
 PARTS = {1: "can", 2: "valve ring", 3: "button", 10: "collar", 11: "keeper", 12: "handle plate", 14: "trigger",
-         16: "trigger scale (frame side)", 17: "trigger scale (outside)", 18: "grip scale (outside)", 19: "grip scale (inside)"}
-TRIG_IDS = {14, 16, 17}
+         16: "trigger sleeve", 18: "grip sleeve"}
+TRIG_IDS = {14, 16}
 FIXED_TO_COLLAR = ("keeper lock", "keeper guide")   # hardware that stays with the collar when the can sits in the big hole
 # hardware joint -> the parts it fastens (it touches them, and the other hardware in the same joint, by design)
 JOINT_PARTS = {"pivot": {"trigger", "handle plate"}, "up-stop": {"handle plate", "trigger"}, "tab pin": {"handle plate", "collar"},
-               "trigger scales": {"trigger", "trigger scale (frame side)", "trigger scale (outside)"},
-               "grip scales": {"handle plate", "grip scale (outside)", "grip scale (inside)"},
+               "trigger sleeve": {"trigger", "trigger sleeve"},
+               "grip sleeve": {"handle plate", "grip sleeve"},
                "keeper lock": {"keeper", "collar"}, "keeper guide": {"keeper", "collar"}}
 TOUCH = [("can", "valve ring"), ("valve ring", "button"), ("valve ring", "collar"), ("valve ring", "keeper"), ("collar", "keeper"),
-         ("handle plate", "collar"), ("handle plate", "grip scale (outside)"), ("handle plate", "grip scale (inside)"),
-         ("trigger", "trigger scale (frame side)"), ("trigger", "trigger scale (outside)"), ("trigger", "button")]
+         ("handle plate", "collar"), ("handle plate", "grip sleeve"),
+         ("trigger", "trigger sleeve"), ("trigger", "button")]
 WHY = {("trigger", "button"): "nose rests on the button", ("valve ring", "keeper"): "notch hugs the ring",
        ("handle plate", "collar"): "tabs in the collar slots", ("collar", "keeper"): "keeper lies on the collar"}
 
@@ -114,7 +114,7 @@ def run():
         dy = -R.g["BIG"] if mode == "BIG HOLE" else 0.0
         B = {}
         for p, (n, j, pts) in base.items():
-            if st == "FULL" and (p in TRIG_IDS or j in ("pivot", "trigger scales")):
+            if st == "FULL" and (p in TRIG_IDS or j in ("pivot", "trigger sleeve")):
                 pts = moved(pts, ang=full, piv=P)
             if st == "KEEPER OPEN" and p == 11:
                 pts = moved(pts, dy=-R.g["K_OPEN"])
@@ -131,9 +131,9 @@ def page(res, pdf_name):
     fig = plt.figure(figsize=(8.5, 11))
     fig.text(0.06, 0.965, "REAL-SHAPE 3D CLEARANCE CHECK: every part against every other part (not a template)", fontsize=11, weight="bold")
     fig.text(0.06, 0.95,
-             "The 3D model on the next pages (plates, printed scales, the can, every bolt, nut, washer, pin and clip at catalog size) is sampled about\n"
+             "The 3D model on the next pages (plates, printed sleeves, the can, every bolt, nut, washer, pin and clip at catalog size) is sampled about\n"
              "every %.3f\" over its real surfaces, and the gap between each pair of parts is measured in 5 states. Parts meant to touch (a bolt in its\n"
-             "hole, a scale on its plate, the tabs in their slots, the nose on the button) are counted as BY DESIGN. Every other pair must keep %.2f\"\n"
+             "hole, a sleeve on its plate, the tabs in their slots, the nose on the button) are counted as BY DESIGN. Every other pair must keep %.2f\"\n"
              "or more. Listed: the closest pairs that are NOT meant to touch, in each state. Hardware sizes are nominal catalog sizes; the can is\n"
              "the 65 mm Rust-Oleum can from the drawings. Gaps can read up to about %.2f\" high from the sampling." % (STEP, MIN_GAP, STEP),
              fontsize=7, va="top")
