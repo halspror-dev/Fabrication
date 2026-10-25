@@ -68,12 +68,12 @@ HW = {
     5: ("Hitch pin clip, stainless, 0.080\" wire", "Bolt Depot #27207", 2, "snaps through each handle tab, under the collar"),
     6: ("Nylon spacer 5 mm ID x 10 mm OD x 5 mm", "Bolt Depot #13775", 1, "up-stop, under the trigger tail"),
     7: ("#10 flat washer", "Bolt Depot #2946", 1, "up-stop nut"),
-    8: ("Clevis pin 3/16\" x 1/2\", stainless", "part no. TBD", 1, "keeper lock, down through keeper + collar"),
-    9: ("Hitch pin clip to fit the clevis pin", "size TBD", 1, "through the clevis pin, under the collar"),
+    8: ("Clevis pin 1/4\" x 1/2\", stainless", "not at BD, TBD", 1, "keeper lock, down through keeper + collar"),
+    9: ("Hitch pin clip, stainless, 0.080\" wire", "Bolt Depot #27207", 1, "through the clevis pin, under the collar"),
     10: ("Screw post, barrel half, 3/16\" x 5/8\"", "MyBinding SO058ASP", 4, "scales (head on the outside)"),
     11: ("Screw post, screw half", "MyBinding SO058ASP", 4, "scales (head on the inside)"),
-    12: ("Screw post, barrel half, 3/16\" x 1/4\"", "part no. TBD", 2, "keeper guides (head under the collar)"),
-    13: ("Screw post, screw half (1/4\" post)", "part no. TBD", 2, "keeper guides (head on the keeper)"),
+    12: ("Screw post, barrel half, 3/16\" x 1/4\"", "MyBinding SO014ASP", 2, "keeper guides (head under the collar)"),
+    13: ("Screw post, screw half (1/4\" post)", "MyBinding SO014ASP", 2, "keeper guides (head on the keeper)"),
 }
 INST = []    # (pid, hw number, joint name, anchor point)
 
@@ -160,15 +160,15 @@ def hw_post_screw(axis, x, y, z, a_face, s, pid):
 
 
 def hw_clevis(x, y, z_face, pid):
-    """3/16" clevis pin, axis z: 5/16 x 1/16 head on z_face, 1/2" of shank below it."""
-    rev("z", x, y, 0, [(0, z_face + 0.06), (0.15, z_face + 0.06), (0.16, z_face + 0.04), (0.16, z_face), (0, z_face)], pid, STEEL)
-    rev("z", x, y, 0, [(0, z_face), (0.094, z_face), (0.094, z_face - 0.48), (0.07, z_face - 0.50), (0, z_face - 0.50)], pid, STEEL)
+    """1/4" clevis pin, axis z: 3/8 x 1/16 head on z_face, 1/2" of shank below it."""
+    rev("z", x, y, 0, [(0, z_face + 0.06), (0.18, z_face + 0.06), (0.19, z_face + 0.04), (0.19, z_face), (0, z_face)], pid, STEEL)
+    rev("z", x, y, 0, [(0, z_face), (0.125, z_face), (0.125, z_face - 0.48), (0.10, z_face - 0.50), (0, z_face - 0.50)], pid, STEEL)
 
 
 def hw_rclip_flat(x, y, z, s, pid):
     """Hitch pin clip lying flat (clip plane x-y) around a vertical pin at (x, y): straight leg along x through the pin's
     cross hole at height z, bend behind the pin, wavy leg back along the pin's side (toward -y)."""
-    r, rad, xb = 0.03, 0.07, x - 0.25
+    r, rad, xb = 0.04, 0.085, x - 0.30
     rev("x", 0, y, z, [(0, xb), (r, xb), (r, xb + 0.80), (0, xb + 0.80)], pid, STEEL, n=10)
     for k in range(9):
         a = -math.pi / 2 + k * math.pi / 8
@@ -425,7 +425,7 @@ if __name__ == "__main__":
 
         fig = plt.figure(figsize=(8.5, 11))
         fig.text(0.06, 0.965, "KEEPER LOCK CLOSE-UP (can, handle and trigger hidden)", fontsize=11, weight="bold")
-        fig.text(0.06, 0.95, "No thumbscrew. The keeper slides on 2 short screw posts (12 + 13) that sit in 2 slots, staggered 0.60\" along the slide, so it\n"
+        fig.text(0.06, 0.95, "No thumbscrew. The keeper slides on 2 short screw posts (12 + 13) that sit in 2 slots, staggered 0.50\" along the slide, so it\n"
                  "can only move straight in and out; it can't spin, and it stays on the collar with the pin out. To lock, a stainless clevis pin (8)\n"
                  "drops through the keeper and the collar, and a hitch pin clip (9) pushes through the pin under the collar. Top: from above. Bottom: from below.", fontsize=7, va="top")
         for k, (ex, el, az, cap) in enumerate(((0.0, 32, -60, "Assembled, from above (keeper locked on a seat can)"),

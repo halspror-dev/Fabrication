@@ -49,16 +49,17 @@ PIN_Z = -CT_MAX - 0.003 - PIN_D / 2      # hole top just under the thickest coll
 CLIP_DROP = 0.09                         # hitch clip's bent leg wraps this far below the tab bottom
 # v0.92: no thumbscrew. The keeper rides on 2 short screw posts in 2 slots (it can only slide straight, can't spin or fall off)
 # and locks with a stainless clevis pin through the keeper and collar, with a hitch pin clip under the collar.
-PIN_Y, DP = 2.20, 0.199                  # lock pin hole (old thumbscrew spot); #8 drill for a 3/16" clevis pin
-GUIDES = ((0.55, 1.90), (-0.55, 2.50))   # guide posts; staggered 0.60 along the slide so the keeper can't twist
+PIN_Y, DP = 2.20, 0.257                  # lock pin hole (old thumbscrew spot); v0.93: F drill for a 1/4" clevis pin (BD has no clip for 3/16")
+GUIDES = ((0.55, 2.00), (-0.55, 2.50))   # guide posts; staggered 0.50 along the slide so the keeper can't twist
 GSLOT = 0.21                             # guide slot width for the 3/16" (0.1875) post barrel
-K_OPEN = 1.15                            # keeper travel from the seat lock to open; the slot ends are the stops
+K_OPEN = 1.25                            # keeper travel from the seat lock to open; the slot ends are the stops
 collar_holes = [(0, PIN_Y, DP)] + [(x, y, D7) for x, y in GUIDES]
 for x, y, d in collar_holes:
     collar = collar.difference(hole(x, y, d))
 
 # ---- Keeper (notched edge at y=0) ----
-keeper = rounded_rect(-0.875, 0, 0.875, 2.75, 0.19)
+KL = 2.85                                # keeper length (v0.93: was 2.75)
+keeper = rounded_rect(-0.875, 0, 0.875, KL, 0.19)
 keeper = keeper.difference(hole(0, 0, 1.30))
 for x, y in GUIDES:
     keeper = keeper.difference(slot(x, y - K_OPEN, x, y, GSLOT))
@@ -186,7 +187,7 @@ def page(pdf, items, scale_box=True):
         draw(ax, g, title, notes, lb, ex)
     if scale_box:
         ax.add_patch(plt.Rectangle((0.6, 0.5), 1, 1, fill=False, lw=0.8))
-        ax.text(2.0, 0.55, "Spray can trigger handle v0.92, 1:1 templates. Metal: 5052 aluminum, collar 0.090\", other parts 0.125\" (1/8\"). Scales: 1/4\" HDPE.\n"
+        ax.text(2.0, 0.55, "Spray can trigger handle v0.93, 1:1 templates. Metal: 5052 aluminum, collar 0.090\", other parts 0.125\" (1/8\"). Scales: 1/4\" HDPE.\n"
                 "Holes marked #7 = 0.201\" (10-24 clearance). F = 0.257\" (1/4\" shoulder bolt). Inches.\n"
                 "Datum: + = can axis. Dims from carlie's build notes (future-builds-spray-can-trigger.md).", fontsize=6)
     pdf.savefig(fig)
@@ -215,7 +216,7 @@ def frame_marks(ax, ox, oy):
 with PdfPages(OUT) as pdf:
     # ---------- Cover: what v0.5 is, parts per handle, laser cost ----------
     fig = plt.figure(figsize=(8.5, 11))
-    fig.text(0.07, 0.94, "SPRAY CAN TRIGGER HANDLE  v0.92", fontsize=16, weight="bold")
+    fig.text(0.07, 0.94, "SPRAY CAN TRIGGER HANDLE  v0.93", fontsize=16, weight="bold")
     fig.text(0.07, 0.915, "Private design. Drawing set: 1:1 templates, assembly views, moving-part sections, open/closed checks, 3D views.", fontsize=8)
     fig.text(0.07, 0.885, "WHAT CHANGED SINCE v0.3 (the parts cut in the v1 order)", fontsize=10, weight="bold")
     fig.text(0.07, 0.875,
@@ -225,7 +226,8 @@ with PdfPages(OUT) as pdf:
         "  whose ring only fits the BIG HOLE: the handle moves 0.80\" toward the keeper (page 10).\n"
         "- v0.9: NO ANGLE CLIP. The handle plate's 2 tabs drop through slots in the collar, a snap-on hitch pin clip under each.\n"
         "- v0.92: NO THUMBSCREW. The keeper rides on 2 short screw posts in 2 staggered slots (can't spin or fall off) and locks with a\n"
-        "  clevis pin + hitch pin clip. Slot ends are the stops; 3 keeper holes (seat lock, big-hole lock, parked open) over 1 collar hole.\n"
+        "  1/4\" clevis pin + the same hitch pin clip #27207 as the tabs. Slot ends are the stops; 3 keeper holes (seat lock, big-hole lock,\n"
+        "  parked open) over 1 collar hole. v0.93: pin went 3/16\" -> 1/4\" because Bolt Depot has no stainless clip for 3/16\".\n"
         "- Every moving part is checked open and closed (pages 9-10) and every part pair in 3D with real shapes (page 11).",
         fontsize=7.5, va="top", linespacing=1.6)
     fig.text(0.07, 0.675, "PARTS PER HANDLE", fontsize=10, weight="bold")
@@ -240,9 +242,9 @@ with PdfPages(OUT) as pdf:
         "#10 flat washer ............................ 1  (up-stop)     BD #2946\n"
         "10-24 x 5/8\" button-head screw ............ 1  (up-stop)     BD #4396\n"
         "Hitch pin clip, stainless, 0.080\" wire ..... 2  (tabs)        BD #27207\n"
-        "Clevis pin 3/16\" x 1/2\", stainless ......... 1  (keeper lock) part no. TBD\n"
-        "Hitch pin clip to fit the clevis pin ....... 1  (keeper lock) size TBD\n"
-        "1/4\" alum. screw post, 3/16\" barrel ...... 2  (keeper guides) part no. TBD\n"
+        "Clevis pin 1/4\" x 1/2\", stainless ......... 1  (keeper lock) not at BD, TBD\n"
+        "Hitch pin clip, stainless, 0.080\" wire ..... 1  (keeper lock) BD #27207\n"
+        "1/4\" alum. screw post, 3/16\" barrel ...... 2  (keeper guides) MyBinding SO014ASP\n"
         "5/8\" alum. screw post, 3/16\" barrel ...... 4  (scales)  MyBinding SO058ASP" % (TS_LEN, GW, GL),
         fontsize=7.5, va="top", linespacing=1.6, family="monospace")
     fig.text(0.07, 0.42, "LASER COST, METAL PARTS (SendCutSend quotes, 2026-10-24, 1/8\" 5052, before shipping)", fontsize=10, weight="bold")
@@ -261,10 +263,10 @@ with PdfPages(OUT) as pdf:
 
     f1 = page(pdf, [
         (collar, 2.3, 8.6, "COLLAR (top view, qty 1)",
-         "0.090\" 5052. Forward (spray) is right; top of page = can's left. Seat 1.125, big hole 1.375. Pin hole #8 (0.199), 2 guide-post holes #7.\n4 TAB SLOTS 0.135\" wide: upper pair = can in the SEAT, lower pair = can in the BIG HOLE.",
+         "0.090\" 5052. Forward (spray) is right; top of page = can's left. Seat 1.125, big hole 1.375. Pin hole F (0.257), 2 guide-post holes #7.\n4 TAB SLOTS 0.135\" wide: upper pair = can in the SEAT, lower pair = can in the BIG HOLE.",
          [(0, -PIN_Y, "pin"), (GUIDES[0][0], -GUIDES[0][1], "post"), (GUIDES[1][0], -GUIDES[1][1], "post"), (TABS[1][1] + 0.12, FMID, "seat"), (TABS[1][1] + 0.12, FMID - BIG, "big hole")], can_axis),
         (keeper, 2.0, 4.9, "KEEPER (qty 1)",
-         "Notch 1.30 dia. 2 guide slots 0.21 wide.\n3 pin holes #8 (0.199): seat lock, big-hole lock, open.", [], None),
+         "Notch 1.30 dia. 2 guide slots 0.21 wide.\n3 pin holes F (0.257): seat lock, big-hole lock, open.", [], None),
         (trigger, 6.0, 8.3, "TRIGGER (side view, qty 1)",
          "Flat, no bends. Nose (right) presses button.\nPivot hole F (0.257). 2 holes #7 for the scale posts.", [], pivot_mark),
     ])
@@ -371,7 +373,7 @@ with PdfPages(OUT) as pdf:
     lab(ax, ox + 0.45, oy + 0.45, ox - 0.3, oy + 2.4, "valve ring sits in the keyhole SEAT\n(center of the can)")
     for gx, gy in GUIDES:
         ax.add_patch(plt.Circle((ox + gx, oy - gy), 0.219, fc="#cfcfd4", ec="k", lw=0.5, zorder=3))
-    ax.add_patch(plt.Circle((ox, oy - PIN_Y), 0.16, fc="#777777", ec="k", lw=0.5, zorder=3))
+    ax.add_patch(plt.Circle((ox, oy - PIN_Y), 0.19, fc="#777777", ec="k", lw=0.5, zorder=3))
     lab(ax, ox - 0.6, oy - 1.3, ox - 4.2, oy - 2.9, "KEEPER: slide toward the can until it stops, drop in the pin.\nPull the pin, slide away (down the page) to take it off.")
     lab(ax, ox, oy - PIN_Y - 0.16, ox - 1.8, oy - 2.95, "clevis pin (clip under the collar)")
     lab(ax, ox + GUIDES[1][0], oy - GUIDES[1][1] - 0.2, ox - 3.0, oy - 3.4, "2 guide posts")
@@ -418,7 +420,7 @@ with PdfPages(OUT) as pdf:
         r(ax, 0.5625, -CT, 1.00, 0, ox, oy, "#9ec5ea")
         # collar pin hole and guide post holes are cut too (posts sit behind the cut, dashed)
         k0 = shift
-        edges = [-2.75]
+        edges = [-KL]
         for hy in sorted(-(PIN_Y - o) for o in (0.0, BIG, K_OPEN)):     # keeper pin holes at x = 0
             edges += [hy - DP / 2, hy + DP / 2]
         edges.append(-0.65)
@@ -431,10 +433,10 @@ with PdfPages(OUT) as pdf:
                 r(ax, y0, z0, y1, z1, ox, oy, "none", ec="#888888", lw=0.6, ls="--", zo=4)
         # clevis pin: head on the keeper, 3/16" shank, hitch clip wire (end-on dot) through its hole under the collar
         y = -PIN_Y
-        r(ax, y - 0.16, 0.125, y + 0.16, 0.185, ox, oy, "#777777", zo=5)
-        r(ax, y - 0.094, 0.125 - 0.50, y + 0.094, 0.125, ox, oy, "#999999", zo=5)
-        ax.add_patch(plt.Circle((ox + K * y, oy + K * (0.125 - 0.41)), K * 0.045, fc="#333333", ec="k", lw=0.4, zorder=6))
-        ax.add_patch(plt.Circle((ox + K * (y - 0.14), oy + K * (0.125 - 0.41)), K * 0.035, fc="#333333", ec="k", lw=0.4, zorder=6))
+        r(ax, y - 0.19, 0.125, y + 0.19, 0.185, ox, oy, "#777777", zo=5)
+        r(ax, y - 0.125, 0.125 - 0.50, y + 0.125, 0.125, ox, oy, "#999999", zo=5)
+        ax.add_patch(plt.Circle((ox + K * y, oy + K * (0.125 - 0.41)), K * 0.04, fc="#333333", ec="k", lw=0.4, zorder=6))
+        ax.add_patch(plt.Circle((ox + K * (y - 0.17), oy + K * (0.125 - 0.41)), K * 0.04, fc="#333333", ec="k", lw=0.4, zorder=6))
         ax.text(0.5, oy + K * 1.35, title, fontsize=9, weight="bold")
         return ox, oy
 
@@ -443,13 +445,13 @@ with PdfPages(OUT) as pdf:
     lab(ax, ox + K * 0.8, oy - K * 0.06, ox + K * 1.0, oy - K * 0.9, "collar lip under the ring\n(other side of the keyhole)")
     lab(ax, ox + K * -1.75, oy + K * 0.06, ox + K * -2.2, oy + K * 1.05, "KEEPER (green)\nlies on top of collar")
     lab(ax, ox + K * -2.0, oy - K * 0.06, ox + K * -1.6, oy - K * 0.95, "COLLAR (blue)")
-    lab(ax, ox + K * -2.2, oy + K * 0.185, ox + K * -4.4, oy + K * 0.85, "CLEVIS PIN 3/16\" (lock),\nin the seat-lock hole")
+    lab(ax, ox + K * -2.2, oy + K * 0.185, ox + K * -4.4, oy + K * 0.85, "CLEVIS PIN 1/4\" (lock),\nin the seat-lock hole")
     lab(ax, ox + K * -2.2, oy - K * 0.33, ox + K * -4.4, oy - K * 0.75, "HITCH PIN CLIP (end-on) through\nthe pin, under the collar")
     lab(ax, ox + K * -2.5, oy + K * 0.16, ox + K * -3.4, oy + K * 1.25, "guide posts (behind the cut, dashed)")
     lab(ax, ox + K * 0.25, oy + K * 0.6, ox + K * 0.7, oy + K * 1.05, "button")
 
     ox, oy = panel(5.6, 3.9, -1.10, "OPEN (putting it on / taking it off)")
-    lab(ax, ox + K * -3.2, oy + K * 0.12, ox + K * -1.0, oy + K * 1.05, "keeper slid 1.15\" away from the can (to the slot ends):\nthe keyhole is open so the ring can pass. The pin can\npark in the keeper's 3rd hole so it holds it open.")
+    lab(ax, ox + K * -3.2, oy + K * 0.12, ox + K * -1.0, oy + K * 1.05, "keeper slid %.2f\" away from the can (to the slot ends):\nthe keyhole is open so the ring can pass. The pin can\npark in the keeper's 3rd hole so it holds it open." % K_OPEN)
     ax.annotate("", (ox + K * -1.6, oy + K * -0.62), (ox + K * -0.6, oy + K * -0.62), arrowprops=dict(arrowstyle="->", lw=0.7))
     ax.text(ox + K * -1.5, oy + K * -0.80, "slide", fontsize=6)
     ax.text(0.5, 0.9,
@@ -459,7 +461,7 @@ with PdfPages(OUT) as pdf:
         "    so the ring moves into the small round seat. The collar plate is now under the ring.\n"
         "3. Slide the keeper back toward the can until it stops (seat can: the slot ends stop it; big-hole can: the ring stops it).\n"
         "    A keeper hole is now over the collar's pin hole. Drop the pin in, push the hitch clip through it under the collar.\n"
-        "The ring is now trapped: collar underneath, keeper notch on the open side. The 2 guide posts sit 0.60\" apart along the\n"
+        "The ring is now trapped: collar underneath, keeper notch on the open side. The 2 guide posts sit 0.50\" apart along the\n"
         "slide, so the keeper can't spin, and they keep it on the collar even with the pin out. 3 keeper holes, 1 collar hole:\n"
         "seat lock, big-hole lock, and parked open. Whichever spot the keeper stops at, a hole lines up, so there's no wrong hole.",
         fontsize=7, va="bottom")
@@ -526,7 +528,7 @@ with PdfPages(OUT) as pdf:
     # ---------- OPEN / CLOSED checks: every moving part in both end states, with clearances computed ----------
     RING = 0.64                    # valve ring radius (32.5 mm cup)
     TS = collar_holes[0][1]        # lock pin y (negative = keeper side)
-    PIN_R, POST_R = 0.1875 / 2, 0.1875 / 2   # 3/16" clevis pin, 3/16" screw-post barrel
+    PIN_R, POST_R = 0.25 / 2, 0.1875 / 2      # 1/4" clevis pin, 3/16" screw-post barrel
     big = (0, -0.80)               # keyhole big hole center
 
     def keeper_at(off):            # keeper slid `off` inches away from the can (toward -y)
@@ -551,7 +553,7 @@ with PdfPages(OUT) as pdf:
     chk("Keeper", "CLOSED", "slot ends stop it with the notch on the ring", k_closed.distance(ring_seat), k_closed.distance(ring_seat) < 0.03)
     endp = GSLOT / 2 - POST_R      # post-to-slot-end play at each stop
     chk("Keeper", "CLOSED", "slot ends are the stop (play past the lock spot)", endp, posts_free(0.0) and not posts_free(-endp - 0.002))
-    chk("Keeper", "OPEN", "stops at the open end of the slots (1.15\" travel)", K_OPEN, posts_free(K_OPEN) and not posts_free(K_OPEN + endp + 0.002))
+    chk("Keeper", "OPEN", "stops at the open end of the slots (%.2f\" travel)" % K_OPEN, K_OPEN, posts_free(K_OPEN) and not posts_free(K_OPEN + endp + 0.002))
     chk("Keeper", "ALL", "lock pin drops through: seat lock, big-hole lock, parked open", None,
         all(pin_free(o) for o in (0.0, BIG, K_OPEN)))
     mids = [o / 20 * K_OPEN for o in range(21)]
@@ -673,7 +675,7 @@ with PdfPages(OUT) as pdf:
         fill(ax, kk, kx, ky, "#c9e6c3", alpha=0.85, z=2)
         x, y = ring.exterior.xy
         ax.plot([v + kx for v in x], [v + ky for v in y], "k--", lw=0.8, zorder=4)
-        ax.add_patch(plt.Circle((kx, ky + TS), 0.16, fc="#555555", zorder=5))
+        ax.add_patch(plt.Circle((kx, ky + TS), 0.19, fc="#555555", zorder=5))
         for gx, gy in GUIDES:
             ax.add_patch(plt.Circle((kx + gx, ky - gy), 0.219, fc="#cfcfd4", ec="k", lw=0.5, zorder=5))
         ax.text(kx - 1.7, ky + 1.35, ttl, fontsize=7, weight="bold")
@@ -705,7 +707,7 @@ with PdfPages(OUT) as pdf:
         ax.add_patch(plt.Circle((kx, ky + dy), 0.33, fc="white", ec="#777777", lw=0.6, zorder=6))
         for x0, x1 in TABS:
             fill(ax, box((x0 + x1) / 2 - 0.03, FMID + dy - 0.28, (x0 + x1) / 2 + 0.03, FMID + dy + 0.28), kx, ky, "#333333", z=7)
-        ax.add_patch(plt.Circle((kx, ky + TS), 0.16, fc="#555555", zorder=7))
+        ax.add_patch(plt.Circle((kx, ky + TS), 0.19, fc="#555555", zorder=7))
         for gx, gy in GUIDES:
             ax.add_patch(plt.Circle((kx + gx, ky - gy), 0.219, fc="#cfcfd4", ec="k", lw=0.5, zorder=7))
         ax.text(kx - 1.8, ky + 1.55, "RING IN THE %s" % name, fontsize=8, weight="bold")
