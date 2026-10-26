@@ -16,4 +16,9 @@ Edit part shapes near the top of templates.py: the collar, keeper, frame points,
 
 Coordinates are in inches. The origin is the can's center at the collar's top surface. x points forward (the spray direction), y points to the can's left, and z points up.
 
-render3d.py is a custom z-buffer renderer. It replaced matplotlib's 3D plotting, which drew colors bleeding through parts. Before sending, check every rendered view for wrong overlaps and labels.
+render3d.py is a custom z-buffer renderer. It replaced matplotlib's 3D plotting, which drew colors bleeding through parts. Checking a build without loading every image:
+
+7. `python3 check3d.py templates.py chk.pdf` prints a short PASS/FAIL line per state; the full table goes to `check3d-table.txt` (`--full` prints it instead).
+8. `python3 pagediff.py OUTDIR` lists the preview PNGs that changed against `OUTDIR/../last-review/`. `last-review/` is not in git: in a fresh checkout, build the previous version's commit into OUTDIR first and run `python3 pagediff.py OUTDIR --accept`, then build the new version.
+9. Send only the CHANGED/NEW pages, with a one-line note on what changed, to the `render-reviewer` subagent (`.claude/agents/render-reviewer.md`). It checks for wrong overlaps, labels, balloons, both open/closed states and the footer version, and replies PASS/FAIL per page. Once it passes, run `python3 pagediff.py OUTDIR --accept`.
+10. Before a version goes to carlie or out for an order, have the subagent check all pages once.

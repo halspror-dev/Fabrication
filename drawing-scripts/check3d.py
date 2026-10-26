@@ -2,7 +2,8 @@
 # pin and clip) and measures the gap between every pair of bodies by sampling their actual surfaces.
 # Pairs that touch on purpose (a bolt in its hole, a sleeve on its plate, the tabs in their slots) are listed as "by design";
 # every other pair must keep at least MIN_GAP.
-# Usage: python3 check3d.py templates.py [page.pdf]  -> prints the table; with a pdf name it also draws the page.
+# Usage: python3 check3d.py templates.py [page.pdf] [--full]  -> prints a short PASS/FAIL summary per state and writes the
+# full table to check3d-table.txt (--full prints the table instead); with a pdf name it also draws the page.
 import sys, math
 import numpy as np
 from scipy.spatial import cKDTree
@@ -164,10 +165,27 @@ def page(res, pdf_name):
 
 if __name__ == "__main__":
     res = run()
+    table = []
     for k, v in res.items():
-        print("==", k)
+        table.append("== %s" % (k,))
         for d, a, b, des in v:
             if not des or d < 0.02:
-                print("%.3f  %-45s | %-45s %s" % (d, a, b, "by design" if des else ""))
-    if len(sys.argv) > 2:
-        page(res, sys.argv[2])
+                table.append("%.3f  %-45s | %-45s %s" % (d, a, b, "by design" if des else ""))
+    if "--full" in sys.argv:
+        print("\n".join(table))
+    else:  # short summary for Claude; the full table goes to a file
+        open("check3d-table.txt", "w").write("\n".join(table) + "\n")
+        bad = 0
+        for (mode, st), v in res.items():
+            free = [r for r in v if not r[3]]
+            fails = [r for r in free if r[0] < MIN_GAP]
+            bad += len(fails)
+            near = free[0] if free else None
+            print("%-9s %-12s %s  closest free pair %s" % (mode, st, "FAIL" if fails else "PASS",
+                  "%.3f\" %s | %s" % (near[0], near[1], near[2]) if near else "none"))
+            for d, a, b, _ in fails:
+                print("   FAIL %.3f\"  %s | %s" % (d, a, b))
+        print("RESULT: %s (min gap %.2f\"). Full table: check3d-table.txt" % ("PASS" if not bad else "%d FAIL" % bad, MIN_GAP))
+    pdf = [a for a in sys.argv[2:] if a.endswith(".pdf")]
+    if pdf:
+        page(res, pdf[0])
