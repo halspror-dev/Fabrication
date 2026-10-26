@@ -46,3 +46,6 @@ write("trigger-sleeve", SL.trigger_sleeve(g).transform([[1, 0, 0, 0], [0, 0, -1,
 write("grip-sleeve", SL.grip_sleeve(g).transform([[1, 0, 0, 0], [0, 0, 1, 0], [0, -1, 0, nf]]))
 for name, thick in (("collar", g["CT"]), ("keeper", 0.125), ("frame", 0.125), ("trigger", 0.125)):
     write("%s-%.3fin" % (name, thick), plate(g[name], thick))
+# 1/32" shim washers (pivot pin head: 1/4" pin; keeper posts: 3/16" barrel), printed instead of bought
+for name, idia, odia in (("shim-pivot", 0.265, 0.50), ("shim-keeper-post", 0.200, 0.44)):
+    write(name, m3d.Manifold.cylinder(1 / 32, odia / 2, odia / 2, 96) - m3d.Manifold.cylinder(1, idia / 2, idia / 2, 96).translate((0, 0, -0.5)))
