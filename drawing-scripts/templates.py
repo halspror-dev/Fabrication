@@ -5,11 +5,12 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from shapely.geometry import Polygon, Point, LineString, box
 from shapely import affinity
+import shapely.ops
 
 OUT = sys.argv[1]
 PNG = sys.argv[2]
 D7 = 0.201  # #7 drill, 10-24 clearance
-DF = 0.257  # F drill, 1/4" shoulder
+DF = 0.250  # v0.94: 1/4" pin holes cut at 0.250 and finished with a 1/4" reamer (snug slip fit)
 
 
 def hole(x, y, d):
@@ -25,66 +26,193 @@ def rounded_rect(x0, y0, x1, y1, r):
 
 
 # ---- Collar (top view: x forward, y left) ----
+CT = 0.090   # v0.7: collar thickness (1/8" was too thick to slide under the valve-cup lip; 2 dimes, 0.106", fit)
+BIG = 0.80   # keyhole: big hole center is 0.80" from the seat center (keeper side)
 collar = rounded_rect(-1.70, -1.00, 1.00, 2.80, 0.25)
-# v0.3: trim the back strip beside the keeper (back edge x=-0.95 on the keyhole side), R0.25 inside + outside
-collar = collar.difference(box(-1.80, 0.10, -0.95, 2.90))
+# v0.7: back strip now reaches the big hole too (was trimmed at y=0.10), so the clip can bolt on in a 2nd position
+collar = collar.difference(box(-1.80, 1.00, -0.95, 2.90))
 collar = collar.buffer(0.25, join_style=1).buffer(-0.25, join_style=1)  # inside corner
 collar = collar.buffer(-0.25, join_style=1).buffer(0.25, join_style=1)  # outside corners
 keyhole = hole(0, 0, 1.125).union(box(-0.5625, 0, 0.5625, 0.80)).union(hole(0, 0.80, 1.375))
 collar = collar.difference(keyhole)
-collar_holes = [(0, 2.45, D7), (-0.95, -0.60, D7), (-1.45, -0.60, D7)]
+# v0.4: thumbscrew hole moved 0.25" toward the big hole (was y 2.45) so the keeper can clamp tighter
+# v0.9: no angle clip. The handle plate has 2 tabs that drop straight down through 2 collar slots, and a stainless
+# hitch pin clip (R-clip, snaps on, nothing to bend) through each tab under the collar holds it down. 2 pairs of slots: can in the SEAT or can in the BIG HOLE (0.80 over).
+FY0, FY1 = 0.095, 0.22                   # handle plate faces in y (final, flipped coordinates)
+FMID = (FY0 + FY1) / 2
+TABS = ((-1.59, -1.27), (-1.16, -0.84))  # tab x extents (rear, front); v0.94: 0.32 long so the 0.125 clip hole keeps 0.0975 of metal each side
+SLOT_W = 0.128                           # v0.94: slot for the 0.125 plate, snug (was 0.135 = 6 deg of lean); file to fit
+TAB_BOT = -0.33                          # tab bottom (0.13 of metal below the pin hole)
+PIN_D = 0.125                            # v0.94: clip hole = SendCutSend minimum hole (sheet thickness); only its bottom edge sets the play
+WIRE = 0.080
+CT_MAX = CT                              # v0.94: carlie picked the 0.090 collar, so the clip holes are set for it
+# v0.94: zero play. The hole bottom sits one wire diameter under the collar, so the clip wire is pinched between the collar
+# and the hole. carlie's preload idea: the front tab's hole is PRELOAD higher, so its clip only goes in with the plate
+# pulled down tight (file the hole top if it won't go).
+PRELOAD = 0.004
+PIN_Z = -CT - WIRE + PIN_D / 2           # rear tab hole center
+PIN_ZS = (PIN_Z, PIN_Z + PRELOAD)        # (rear, front)
+CLIP_DROP = 0.09                         # hitch clip's bent leg wraps this far below the tab bottom
+# v0.92: no thumbscrew. The keeper rides on 2 short screw posts in 2 slots (it can only slide straight, can't spin or fall off)
+# and locks with a stainless clevis pin through the keeper and collar, with a hitch pin clip under the collar.
+PIN_Y, DP = 2.20, DF                     # lock pin hole (old thumbscrew spot); 1/4" clevis pin, cut 0.250 + ream (v0.94, was 0.257)
+GUIDES = ((0.55, 2.00), (-0.55, 2.50))   # guide posts; staggered 0.50 along the slide so the keeper can't twist
+GSLOT = 0.198                            # guide slot width for the 3/16" (0.1875) post barrel (v0.94: was 0.21; measure the barrel)
+K_OPEN = 1.25                            # keeper travel from the seat lock to open; the slot ends are the stops
+collar_holes = [(0, PIN_Y, DP)] + [(x, y, D7) for x, y in GUIDES]
 for x, y, d in collar_holes:
     collar = collar.difference(hole(x, y, d))
 
 # ---- Keeper (notched edge at y=0) ----
-keeper = rounded_rect(-0.875, 0, 0.875, 2.75, 0.19)
-keeper = keeper.difference(hole(0, 0, 1.30)).difference(slot(0, 0.95, 0, 2.45, D7))
+KL = 2.85                                # keeper length (v0.93: was 2.75)
+keeper = rounded_rect(-0.875, 0, 0.875, KL, 0.19)
+keeper = keeper.difference(hole(0, 0, 1.30))
+for x, y in GUIDES:
+    keeper = keeper.difference(slot(x, y - K_OPEN, x, y, GSLOT))
+for off in (0.0, BIG, K_OPEN):           # pin holes: seat lock, big-hole lock, parked open
+    keeper = keeper.difference(hole(0, PIN_Y - off, DP))
 
 collar = affinity.scale(collar, 1, -1, origin=(0, 0))
 keeper = affinity.scale(keeper, 1, -1, origin=(0, 0))
 collar_holes = [(x, -y, d) for x, y, d in collar_holes]
+TAB_SLOTS = [(x0, x1, FMID + dy) for dy in (0.0, -BIG) for x0, x1 in TABS]
+
+
+def tab_slot(x0, x1, ym):   # near-square slot (small corner radius) so it wastes no collar past the tab ends
+    return rounded_rect(x0 - 0.01, ym - SLOT_W / 2, x1 + 0.01, ym + SLOT_W / 2, 0.01)
+
+
+for x0, x1, ym in TAB_SLOTS:
+    collar = collar.difference(tab_slot(x0, x1, ym))
 
 # ---- Frame (side view: x forward, z up) ----
+# v0.4: trimmed top, grip raked ~8 deg and moved back, pivot moved forward for more trigger travel
 import math
-pts = [(-0.80, 0), (-0.80, 2.25), (-2.80, 2.25), (-2.80, 1.60), (-4.34, 0), (-5.56, -4.53), (-4.52, -4.53), (-3.51, -0.79), (-1.70, -0.125), (-1.70, 0)]
+P = (-1.50, 1.215)       # trigger pivot, nominal (lobe 0 of the pivot holes)
+S = (-2.50, 0.798)       # up-stop screw, nominal (its own slot, same travel)
+STOP_R = 0.197            # v0.6: 10 mm OD nylon spacer on a 10-24 button screw (was a 1/4" shoulder bolt)
+SLOT = (-0.165, 0.335)     # up-stop slot travel (it carries no squeeze load, so it stays an adjustable slot)
+# v0.94: the pivot is a 1/4" clevis pin + hitch clip in 4 overlapping round lobes (scalloped slot), not a clamped slot.
+# Lobes 0.167 apart leave a 0.19 neck, so the 0.250 pin can't slide between positions under load: pull the pin to move it.
+PIV = (-0.165, 0.0, 0.167, 0.335)
+pts = [(-0.80, 0), (-0.80, 1.35), (-1.15, 1.90), (-2.00, 1.90), (-2.95, 1.40), (-4.45, 0.25), (-5.10, -4.55),
+       (-4.20, -4.55), (-3.55, -0.50), (-3.25, 0.10), (-2.15, 0.10), (-1.95, -0.125), (-1.70, -0.125), (-1.70, 0)]
 frame = Polygon(pts)
 frame = frame.buffer(-0.2, join_style=1).buffer(0.2, join_style=1)  # R0.2 on outside corners
-frame = frame.difference(slot(-2.25, 1.05, -2.25, 1.55, D7))
-for x, y in [(-1.05, 0.30), (-1.50, 0.30), (-4.30, -1.80), (-4.87, -3.90)]:
-    frame = frame.difference(hole(x, y, D7))
+for dz in PIV:
+    frame = frame.difference(hole(P[0], P[1] + dz, DF))
+frame = frame.difference(slot(S[0], S[1] + SLOT[0], S[0], S[1] + SLOT[1], D7))
+for (x0, x1), pz in zip(TABS, PIN_ZS):
+    tab = rounded_rect(x0, TAB_BOT, x1, 0.15, 0.05).union(box(x0, -0.01, x1, 0.15))
+    frame = frame.union(tab).difference(hole((x0 + x1) / 2, pz, PIN_D))
 
 # ---- Trigger (pivot at origin, drawn as it sits on the can) ----
-Q = (-1.077, -3.503)
-nose = box(0, -0.25, 2.25, 0.25).union(hole(2.25, 0, 0.5))
-bump = hole(2.25, -0.25, 0.40)
+# v0.6: one flat plate, straight full-hand bar (no divots), tail that rests on the up-stop
+NOSE = 1.50
+nose = box(0, -0.25, NOSE, 0.25).union(hole(NOSE, 0, 0.5))
+bump = hole(NOSE, -0.25, 0.40)
 boss = hole(0, 0, 0.90)
-arm = LineString([(0, 0), Q]).buffer(0.25, 32)
-# finger flange tab on front edge of finger arm, local z -1.975..-2.975
-ux, uz = Q[0] / math.hypot(*Q), Q[1] / math.hypot(*Q)
-nx, nz = -uz, ux  # perpendicular
+tail = box(-1.15, -0.22, 0, 0.22).union(hole(-1.15, 0, 0.44))
+# v0.95: bar front edge moved back (top more than bottom) so the printed sleeve sets the grip span for an average man's hand
+BAR_BACK = (0.30, 0.10)                              # (top, bottom) shift of the bar front edge toward the grip
+F0, F1, W = (-0.55 - BAR_BACK[0], -1.55), (-0.95 - BAR_BACK[1], -5.35), 0.70   # bar front edge top/bottom, bar width
+L = math.hypot(F1[0] - F0[0], F1[1] - F0[1])
+ux, uz = (F1[0] - F0[0]) / L, (F1[1] - F0[1]) / L   # down the bar
+nx, nz = -uz, ux
 if nx < 0:
-    nx, nz = -nx, -nz  # forward-pointing normal
-
-def on_front(z):
-    t = z / Q[1]
-    return (Q[0] * t + nx * 0.25, z + nz * 0.25)
-
-a, b = on_front(-2.45), on_front(-3.45)
-tab = Polygon([a, b, (b[0] + nx * 0.5, b[1] + nz * 0.5), (a[0] + nx * 0.5, a[1] + nz * 0.5)])
-trigger = nose.union(bump).union(boss).union(arm).union(tab).difference(hole(0, 0, DF))
-bend = (a, b)
+    nx, nz = -nx, -nz                                 # forward-pointing normal
+# v0.95: the neck's back edge meets the bar's top back corner, so the raked-back bar leaves no ledge there
+neck = Polygon([(0.15, -0.40), (-0.55, -1.30), F0, (F0[0] - ux * 0.10 - nx * W, F0[1] - uz * 0.10 - nz * W), (-0.70, -0.60), (-0.55, -0.22), (0, -0.22)])
 
 
-# ---- Angle clip, unfolded (u = along length from front end, v = from the corner) ----
-clip_flat = box(0, -0.75, 1.10, 0.75)
-for u, v in [(0.25, -0.38), (0.75, -0.38), (0.35, 0.30), (0.80, 0.30)]:
-    clip_flat = clip_flat.difference(hole(u, v, D7))
+def along_bar(t0, t1, w):
+    """Rectangle on the bar's axis: from t0 to t1 down the front edge, w wide toward the back."""
+    a, b = (F0[0] + ux * t0, F0[1] + uz * t0), (F0[0] + ux * t1, F0[1] + uz * t1)
+    return Polygon([a, b, (b[0] - nx * w, b[1] - nz * w), (a[0] - nx * w, a[1] - nz * w)])
 
 
-def clip_marks(ax, ox, oy):
-    ax.plot([ox, ox + 1.10], [oy, oy], "k--", lw=0.6)
-    ax.text(ox + 1.18, oy + 0.3, "UPRIGHT leg:\nbolts sideways\ninto handle", fontsize=5)
-    ax.text(ox + 1.18, oy - 0.55, "FLAT leg:\nbolts down\ninto collar", fontsize=5)
+bar = along_bar(-0.10, L, W)                          # square bottom end, so a straight saw-cut scale matches it
+trigger = nose.union(bump).union(boss).union(tail).union(neck).union(bar)
+trigger = trigger.buffer(-0.06, join_style=1).buffer(0.06, join_style=1)   # round every outside corner
+HDPE = 0.25                                           # printed sleeve side wall, so the bar and grip are 5/8" thick
+# v0.8: trigger plate faces in y. The pivot shoulder (0.25) holds trigger 0.125 + nylon washer 0.060 against the
+# handle plate face (y 0.095), with the 0.065 play on the head side, so the trigger sits at y -0.090..+0.035.
+TY0, TY1 = -0.090, 0.035
+# v0.95: printed U-SLEEVES instead of flat scales (carlie: rounder, more comfortable, sized for an average man's hand).
+# One PETG sleeve slides over the FRONT edge of the trigger bar, one over the BACK edge of the grip; each is held by the
+# same 2 screw posts. The hand side is a full round across the 5/8" thickness, so no aluminum edge touches the fingers
+# or the palm. Lee et al. 2009 (PMID 19424925): 50-55 mm spans grip strongest and most comfortable, about 27-29% of
+# hand length; average man's hand 188 mm -> about 51-55 mm. Middle and ring fingers want the widest span (bow-shaped).
+SLV_T = 0.06                                          # sleeve wall over the metal edge
+SLV_R = (0.125 + 2 * HDPE) / 2                        # full round across the sleeve
+SLV_SLOT = 0.135                                      # printed slot for the 0.125 plate (slides on)
+BOW, BOW_S = 0.08, (0.45, 3.85)                       # trigger sleeve bulge under the middle/ring fingers, and where it runs
+
+
+def bow(s):
+    a, b = BOW_S
+    return BOW * math.sin(math.pi * (s - a) / (b - a)) ** 2 if a < s < b else 0.0
+
+
+def bar_pt(s, n):                                     # s down the bar front edge, n forward of it
+    return (F0[0] + ux * s + nx * n, F0[1] + uz * s + nz * n)
+
+
+FINGER_Z = (-1.0, -1.75, -2.6, -3.45)                 # finger heights for the span (index, middle, ring, little), can z
+TS0 = (-1.92 - F0[1]) / uz                            # sleeve starts where the bar is clear of the neck (v0.95: 0.12 lower, clears the handle at pivot lobe 4)
+TS_LEN = round(L - TS0 - 0.03, 2)                     # post holes are placed on this length (as the old scales)
+TRIG_SLV = [(s, SLV_T + bow(s)) for s in (TS0 + (L + SLV_T - TS0) * k / 80 for k in range(81))]   # (s, front of sleeve)
+trig_sleeve = Polygon([bar_pt(s, f) for s, f in TRIG_SLV] + [bar_pt(s, -W) for s, f in reversed(TRIG_SLV)])
+trig_sleeve = trig_sleeve.buffer(-0.04, join_style=1).buffer(0.04, join_style=1)
+SCALE_HOLES = []
+for t in (0.60, TS_LEN - 0.60):                      # 0.60" in from each end
+    SCALE_HOLES.append(bar_pt(TS0 + t, -W / 2))
+for x, z in SCALE_HOLES:
+    trigger = trigger.difference(hole(x, z, D7))
+    trig_sleeve = trig_sleeve.difference(hole(x, z, D7))
+trigger = trigger.difference(hole(0, 0, DF))
+# grip sleeve: front edge on the old scale's front line, back wraps the plate's back edge (palm side)
+G0, G1 = (-4.10, -0.85), (-4.65, -4.40)             # grip centerline top/bottom (post holes sit on it)
+GW = 0.86
+GL = round(math.hypot(G1[0] - G0[0], G1[1] - G0[1]), 2)
+gux, guz = (G1[0] - G0[0]) / GL, (G1[1] - G0[1]) / GL
+gnx, gnz = -guz, gux                                  # forward
+GRIP_HOLES = [(G0[0] + gux * t, G0[1] + guz * t) for t in (0.60, GL - 0.60)]
+for x, z in GRIP_HOLES:
+    frame = frame.difference(hole(x, z, D7))
+
+
+def grip_pt(s, n):
+    return (G0[0] + gux * s + gnx * n, G0[1] + guz * s + gnz * n)
+
+
+PLATE_BOT = min(z for x, z in Polygon(frame.exterior).exterior.coords)
+GS0 = -0.35                                           # sleeve top (up near the web of the thumb)
+GS1 = (PLATE_BOT - SLV_T - G0[1]) / guz               # sleeve bottom: wraps under the plate bottom
+GRIP_SLV, nb_last = [], None
+plate_out = Polygon(frame.exterior)
+for k in range(81):
+    s = GS0 + (GS1 - GS0) * k / 80
+    c = grip_pt(s, 0)
+    if c[1] > PLATE_BOT + 0.25:                       # above the plate's rounded bottom corner; below it, keep the wall straight
+        hit = LineString([c, grip_pt(s, -2.0)]).intersection(plate_out.exterior)
+        pts_ = [hit] if hit.geom_type == "Point" else list(getattr(hit, "geoms", []))
+        nb_last = -min(math.hypot(p.x - c[0], p.y - c[1]) for p in pts_) - SLV_T
+    GRIP_SLV.append((s, nb_last, GW / 2))             # (s, back of sleeve, front of sleeve)
+def d_section(n_flat, n_tip, toward, slot):
+    """Sleeve cross-section in (n, y): flat side at n_flat, full round (radius SLV_R) whose tip is at n_tip, minus the slot."""
+    c = n_tip - toward * SLV_R
+    return box(min(n_flat, c), -SLV_R, max(n_flat, c), SLV_R).union(Point(c, 0).buffer(SLV_R, 64)).difference(slot)
+
+
+TRIG_SEC = d_section(-W, SLV_T + BOW, 1, box(-W - 0.01, -SLV_SLOT / 2, 0, SLV_SLOT / 2))   # at the bow peak
+grip_sleeve = Polygon([grip_pt(s, f) for s, b, f in GRIP_SLV] + [grip_pt(s, b) for s, b, f in reversed(GRIP_SLV)])
+grip_sleeve = grip_sleeve.buffer(-0.04, join_style=1).buffer(0.04, join_style=1)
+for x, z in GRIP_HOLES:
+    grip_sleeve = grip_sleeve.difference(hole(x, z, D7))
+_s, _b, _f = GRIP_SLV[40]
+GRIP_SEC = d_section(_f, _b, -1, box(_b + SLV_T, -SLV_SLOT / 2, _f + 0.01, SLV_SLOT / 2))       # mid grip
+STOP_AT = (S[0] - P[0], S[1] - P[1])   # stop bolt in trigger coordinates (under the tail)
 
 
 def draw(ax, geom, title, notes, holes_lbl=(), extra=None):
@@ -107,7 +235,7 @@ def draw(ax, geom, title, notes, holes_lbl=(), extra=None):
     ax.text(minx, maxy + 0.08, notes, fontsize=5.5, va="bottom")
 
 
-def page(pdf, items, scale_box=True):
+def page(pdf, items, scale_box=True, note=None):
     fig = plt.figure(figsize=(8.5, 11))
     ax = fig.add_axes([0, 0, 1, 1])
     ax.set_xlim(0, 8.5)
@@ -121,16 +249,14 @@ def page(pdf, items, scale_box=True):
         draw(ax, g, title, notes, lb, ex)
     if scale_box:
         ax.add_patch(plt.Rectangle((0.6, 0.5), 1, 1, fill=False, lw=0.8))
-        ax.text(2.0, 0.55, "Spray can trigger handle v0.3, 1:1 templates. All 0.125\" (1/8\") 5052 aluminum.\n"
-                "Holes marked #7 = 0.201\" (10-24 clearance). F = 0.257\" (1/4\" shoulder bolt). Inches.\n"
+        ax.text(2.0, 0.55, "Spray can trigger handle v0.95, 1:1 templates. Metal: 5052 aluminum, collar 0.090\", other parts 0.125\" (1/8\"). Sleeves: printed PETG, 5/8\" thick.\n"
+                "Holes marked #7 = 0.201\" (10-24 clearance). 1/4\" pin holes cut 0.250\", ream 1/4\". Inches.\n"
                 "Datum: + = can axis. Dims from carlie's build notes (future-builds-spray-can-trigger.md).", fontsize=6)
+    if note:
+        fig.text(0.07, 0.30, note, fontsize=7, va="top", linespacing=1.6)
     pdf.savefig(fig)
     return fig
 
-
-def bend_line(ax, ox, oy):
-    (x1, y1), (x2, y2) = bend
-    ax.plot([x1 + ox, x2 + ox], [y1 + oy, y2 + oy], "k--", lw=0.6)
 
 
 def can_axis(ax, ox, oy):
@@ -139,37 +265,105 @@ def can_axis(ax, ox, oy):
 
 
 def pivot_mark(ax, ox, oy):
-    ax.text(ox + 0.3, oy + 0.3, "pivot (F hole)", fontsize=5)
-    ax.text(ox + 1.3, oy - 0.62, "nose bump\npresses button", fontsize=5)
+    ax.text(ox + 0.3, oy + 0.3, "pivot (1/4\" hole, ream)", fontsize=5)
+    ax.text(ox + 0.8, oy - 0.62, "nose bump\npresses button", fontsize=5)
+    ax.text(ox - 1.5, oy + 0.32, "tail rests on\nthe up-stop", fontsize=5)
 
 
 def frame_marks(ax, ox, oy):
     ax.plot([ox - 1.70, ox - 0.80], [oy, oy], "r:", lw=0.5)
     ax.text(ox - 0.65, oy - 0.05, "<- collar sits here", fontsize=5, color="r")
-    ax.text(ox - 0.65, oy + 1.25, "<- pivot slot, #7 wide", fontsize=5)
+    ax.text(ox - 0.65, oy + 1.25, "<- pivot: 4 lobed 1/4\" holes (pin can't slide between)", fontsize=5)
+    ax.annotate("up-stop slot", (ox + S[0], oy + S[1] + 0.3), (ox - 3.6, oy + 1.9), fontsize=5, ha="right", arrowprops=dict(arrowstyle="-", lw=0.4))
 
 
 with PdfPages(OUT) as pdf:
+    # ---------- Cover: what v0.5 is, parts per handle, laser cost ----------
+    fig = plt.figure(figsize=(8.5, 11))
+    fig.text(0.07, 0.94, "SPRAY CAN TRIGGER HANDLE  v0.95", fontsize=16, weight="bold")
+    fig.text(0.07, 0.915, "Private design. Drawing set: 1:1 templates, assembly views, moving-part sections, open/closed checks, 3D views.", fontsize=8)
+    fig.text(0.07, 0.885, "WHAT CHANGED SINCE v0.3 (the parts cut in the v1 order)", fontsize=10, weight="bold")
+    fig.text(0.07, 0.875,
+        "- Handle: top trimmed, grip raked about 8 degrees and moved back. Trigger: straight 3.8\" bar, pivot moved forward (lighter pull).\n"
+        "- Up-stop: the trigger tail rests on a 10 mm nylon spacer on a button screw, so it can't swing up. Grip covers on bar and grip.\n"
+        "- v0.7 (after the v1 fit test): collar 0.090\" (1/8\" would not slide under the valve lip). Second handle position for cans\n"
+        "  whose ring only fits the BIG HOLE: the handle moves 0.80\" toward the keeper (page 10).\n"
+        "- v0.9: NO ANGLE CLIP. The handle plate's 2 tabs drop through slots in the collar, a snap-on hitch pin clip under each.\n"
+        "- v0.92: NO THUMBSCREW. The keeper rides on 2 short screw posts in 2 staggered slots (can't spin or fall off) and locks with a\n"
+        "  1/4\" clevis pin + the same hitch pin clip #27207 as the tabs. Slot ends are the stops; 3 keeper holes (seat lock, big-hole lock,\n"
+        "  parked open) over 1 collar hole. v0.93: pin went 3/16\" -> 1/4\" because Bolt Depot has no stainless clip for 3/16\".\n"
+        "- v0.94 (tighten everything): pivot = clevis pin in 4 lobed holes (no shoulder bolt, can't slip); all 1/4\" holes 0.250\" + ream;\n"
+        "  tab slots 0.128\" (was 0.135, 6 deg lean); tab clips pinch the wire with zero play, front tab preloaded 0.004\"; keeper slots\n"
+        "  0.198\" and nylon shims under the post heads; shim under the pivot pin head (trigger end play 0.065 -> 0.009).\n"
+        "- v0.95 (comfort): printed U-SLEEVES slide over the trigger bar's front and the grip's back (full round, no aluminum edge on\n"
+        "  the hand); trigger sleeve bows out under the middle/ring fingers. Bar front moved back 0.30\" (top) / 0.10\" (bottom) so the\n"
+        "  squeezed span is 53-55 mm, sized for an average man's hand (188 mm; best span 27-29% of hand length, Lee et al. 2009).\n"
+        "- Every moving part is checked open and closed (pages 9-10) and every part pair in 3D with real shapes (page 11).",
+        fontsize=7.5, va="top", linespacing=1.6)
+    fig.text(0.07, 0.58, "PARTS PER HANDLE", fontsize=10, weight="bold")
+    fig.text(0.07, 0.57,
+        "Laser cut, 5052 aluminum:  collar 0.090\", keeper, frame, trigger 1/8\" (1 each)\n"
+        "Sleeves, 3D printed PETG (STL files):  trigger sleeve x1, grip sleeve x1\n"
+        "Clevis pin 1/4\" x 1/2\", stainless ......... 2  (pivot, keeper) Rivetsonline CLPF-0250-0500\n"
+        "Hitch pin clip, stainless, 0.080\" wire ..... 4  (2 tabs, pivot, keeper) BD #27207\n"
+        "1/32\" nylon shim washer ................... 3  (pivot head, 2 keeper posts) TBD\n"
+        "Nylon spacer 5 mm ID x 10 mm OD x 5 mm ...... 1  (up-stop)     BD #13775\n"
+        "1/4\" nylon washer ......................... 1  (pivot)       BD #15939\n"
+        "10-24 nylon locknut ........................ 1  (up-stop)     BD #2552\n"
+        "#10 flat washer ............................ 1  (up-stop)     BD #2946\n"
+        "10-24 x 5/8\" button-head screw ............ 1  (up-stop)     BD #4396\n"
+
+        "1/4\" alum. screw post, 3/16\" barrel ...... 2  (keeper guides) MyBinding SO014ASP\n"
+        "5/8\" alum. screw post, 3/16\" barrel ...... 4  (sleeves) MyBinding SO058ASP",
+        fontsize=7.5, va="top", linespacing=1.6, family="monospace")
+    fig.text(0.07, 0.36, "LASER COST, METAL PARTS (SendCutSend, 5052, each, before tax; shipping is free)", fontsize=10, weight="bold")
+    rows = ["%-34s %8s %8s %8s %8s" % ("part (v0.93 files, qty 100)", "trigger", "keeper", "frame", "collar"),
+            "%-34s %8s %8.2f %8s %8.2f" % ("carlie's quotes 2026-10-25", "-", 2.61, "-", 3.12),
+            "%-34s %8.2f %8s %8.2f %8s" % ("old v0.7 quote (not re-quoted yet)", 2.79, "", 3.90, ""),
+            "%-34s %8s %8.2f %8s %8s" % ("option: keeper in 0.090\"", "", 2.17, "", "")]
+    fig.text(0.07, 0.347, "\n".join(rows), fontsize=7.5, va="top", family="monospace", linespacing=1.6)
+    fig.text(0.07, 0.27, "Collar 0.090\" (0.100\" is \\$3.33). Keeper, frame and trigger 1/8\". Metal for one handle about \\$13.44 with 8.25% tax.\n"
+             "100 handles, everything (metal, Bolt Depot, Rivetsonline pins, MyBinding posts, printed sleeves), tax and shipping in:\n"
+             "about \\$1,840 (\\$18.40 a handle), ESTIMATE: frame + trigger are the old quote, shims not priced. buy-sheet/BUY-SHEET.md.", fontsize=7.5, va="top", linespacing=1.6)
+    pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p0.png"), dpi=80)
+
     f1 = page(pdf, [
         (collar, 2.3, 8.6, "COLLAR (top view, qty 1)",
-         "Forward (spray) is right; top of page = can's left. Seat 1.125, big hole 1.375. Cut slot 0.02\" small, file to fit.\n3 holes #7: thumbscrew (bottom), 2 clip holes (upper left). + = can center.",
-         [(0, -2.45, ""), (-0.95, 0.60, ""), (-1.45, 0.60, "")], can_axis),
+         "0.090\" 5052. Forward (spray) is right; top of page = can's left. Seat 1.125, big hole 1.375. Pin hole 0.250 (ream 1/4\"), 2 guide-post holes #7.\n4 TAB SLOTS 0.128\" wide (file to fit the plate): upper pair = can in the SEAT, lower pair = can in the BIG HOLE.",
+         [(0, -PIN_Y, "pin"), (GUIDES[0][0], -GUIDES[0][1], "post"), (GUIDES[1][0], -GUIDES[1][1], "post"), (TABS[1][1] + 0.12, FMID, "seat"), (TABS[1][1] + 0.12, FMID - BIG, "big hole")], can_axis),
         (keeper, 2.0, 4.9, "KEEPER (qty 1)",
-         "Notch 1.30 dia. Slot #7 wide.", [], None),
-        (trigger, 5.6, 9.0, "TRIGGER (side view, qty 1)",
-         "Nose (right) presses button. Pivot hole F (0.257). Dashed line = bend the\nfinger tab 90 deg TOWARD YOU (printed side up). Tab = finger pad.", [], lambda ax, ox, oy: bend_line(ax, ox, oy)),
+         "Notch 1.30 dia. 2 guide slots 0.198 wide.\n3 pin holes 0.250 (ream 1/4\"): seat lock, big-hole lock, open.", [], None),
+        (trigger, 6.0, 8.3, "TRIGGER (side view, qty 1)",
+         "Flat, no bends. Nose (right) presses button.\nPivot hole 0.250 (ream 1/4\"). 2 holes #7 for the sleeve posts.", [], pivot_mark),
     ])
     f1.savefig(PNG.replace(".png", "-p1.png"), dpi=80)
     f2 = page(pdf, [
-        (frame, 6.8, 6.3, "FRAME / HANDLE (side view, qty 1)",
-         "Forward is right. Clip holes #7 at z +0.30; grip-scale holes #7.", [], frame_marks),
-        (clip_flat, 5.7, 2.6, "ANGLE CLIP (qty 1)",
-         "Cut 1-1/10\" off 3/4\" x 3/4\" x 1/8\" aluminum ANGLE.\nWrap this template around it: dashed line = the corner.\n4 holes #7. Left = front (toward the can).", [], clip_marks),
+        (frame, 6.0, 6.3, "FRAME / HANDLE (side view, qty 1)",
+         "Forward is right. 2 TABS on the bottom drop through the collar slots; a snap-on hitch pin\nclip goes through the small hole in each tab, under the collar. Grip-sleeve holes #7.", [], frame_marks),
     ])
     f2.savefig(PNG.replace(".png", "-p2.png"), dpi=80)
+    def hang(gm, ang):            # rotate so the long axis runs down the page, top-left corner at (0, 0)
+        gm = affinity.rotate(gm, ang, origin=(0, 0))
+        return affinity.translate(gm, -gm.bounds[0], -gm.bounds[3])
+    ts_up = hang(trig_sleeve, -90 - math.degrees(math.atan2(uz, ux)))
+    gs_up = hang(grip_sleeve, -90 - math.degrees(math.atan2(guz, gux)))
+    f2b = page(pdf, [
+        (ts_up, 1.0, 9.6, "TRIGGER SLEEVE (side, 1:1), printed PETG, qty 1",
+         "Front (fingers) is right; it bows out under the middle\nand ring fingers. Open on the left: it slides onto the\nbar's front edge. 2 holes #7 for the screw posts.", [], None),
+        (gs_up, 4.0, 9.6, "GRIP SLEEVE (side, 1:1), printed PETG, qty 1",
+         "Back (palm) is left, open on the right: it slides\nonto the plate's back edge and wraps under the\nbottom. 2 holes #7 for the screw posts.", [], None),
+        (hang(TRIG_SEC, 0), 1.0, 4.4, "TRIGGER SLEEVE SECTION (1:1, at the bow)",
+         "5/8\" thick, full round on the finger side.\nSlot %.3f\" for the 1/8\" bar. Front wall %.2f\"\nat the ends, %.2f\" at the bow." % (SLV_SLOT, SLV_T, SLV_T + BOW), [], None),
+        (hang(GRIP_SEC, 0), 4.0, 4.4, "GRIP SLEEVE SECTION (1:1)",
+         "Full round on the palm side, %.2f\" wall\nover the plate edge. Slot %.3f\"." % (SLV_T, SLV_SLOT), [], None),
+    ], note="PRINTING (Bambu, PETG): print each sleeve standing on its open side (trigger: open back down; grip: open front down),\n"
+             "so the round faces up and nothing needs supports. 100%% infill or 6+ walls in the side walls (the posts clamp them).\n"
+             "Matte or textured surface, not glossy. Holes print at #7 (0.201\"); the slot prints at %.3f\" so it slides over the 0.125\" plate.\n"
+             "STL files (millimeters): trigger-sleeve-v0.95.stl, grip-sleeve-v0.95.stl, and the 4 plates at real thickness for the plastic test\n"
+             "build (collar-0.090in, keeper/frame/trigger-0.125in, print flat). Check each print against the 1:1 pages before assembly." % SLV_SLOT)
+    f2b.savefig(PNG.replace(".png", "-p2b.png"), dpi=80)
 
     # ---------- Assembly pages (side + top view, 1:1) ----------
-    P = (-2.25, 1.215)
     trig_on = affinity.translate(trigger, P[0], P[1])
 
     def fill(ax, g, ox, oy, fc, ec="k", lw=0.7, alpha=1.0, ls="-", z=1):
@@ -195,7 +389,7 @@ with PdfPages(OUT) as pdf:
     # Side view
     fig, ax = newpage("ASSEMBLY: SIDE VIEW (1:1, looking at the right side of the can)",
         "Nozzle sprays to the RIGHT. Your hand holds the grip on the left. The trigger is closest to you, the handle plate behind it,\n"
-        "the angle clip on the far side. Gray = the can, which is not a part.")
+        "the 2 tabs drop through the collar with a snap-on clip under it. Gray = the can, which is not a part.")
     ox, oy = 6.4, 6.3
     bead = 0.14
     can = Polygon([(-0.64, bead), (0.64, bead), (0.62, -0.05), (0.75, -0.35), (1.0, -0.65), (1.15, -0.85), (1.28, -0.95), (1.28, -4.4),
@@ -206,19 +400,28 @@ with PdfPages(OUT) as pdf:
     ax.plot([ox + 0.33, ox + 0.9], [oy + 0.55, oy + 0.55], ":", color="#777777", lw=0.6)
     ax.text(ox + 0.5, oy + 0.6, "spray", fontsize=6, color="#777777")
     fill(ax, frame, ox, oy, "#f3d9b1", z=2)
-    fill(ax, box(-1.70, -0.125, 1.00, 0), ox, oy, "#9ec5ea", z=3)
+    fill(ax, box(-1.70, -CT, 1.00, 0), ox, oy, "#9ec5ea", z=3)
     fill(ax, box(-0.875, 0, 0.875, 0.125), ox, oy, "#c9e6c3", z=3)
-    fill(ax, box(-1.80, 0, -0.70, 0.75), ox, oy, "none", ec="#555555", ls="--", z=4)
+    for x0, x1 in TABS:
+        ax.add_patch(plt.Circle((ox + (x0 + x1) / 2, oy + PIN_Z), PIN_D / 2, fc="#555555", ec="k", lw=0.4, zorder=4))
+    fill(ax, affinity.translate(grip_sleeve, 0, 0), ox, oy, "#3a3a3a", z=3)
     fill(ax, trig_on, ox, oy, "#bfbfbf", z=5)
+    fill(ax, affinity.translate(trig_sleeve, *P), ox, oy, "#3a3a3a", z=5.5)
+    for x, z in SCALE_HOLES:
+        ax.add_patch(plt.Circle((ox + P[0] + x, oy + P[1] + z), 0.14, fc="#bbbbbb", ec="k", lw=0.5, zorder=6))
+    for x, z in GRIP_HOLES:
+        ax.add_patch(plt.Circle((ox + x, oy + z), 0.14, fc="#bbbbbb", ec="k", lw=0.5, zorder=4))
     ax.add_patch(plt.Circle((ox + P[0], oy + P[1]), 0.19, fc="#555555", ec="k", lw=0.5, zorder=6))
+    ax.add_patch(plt.Circle((ox + S[0], oy + S[1]), STOP_R, fc="#222222", ec="k", lw=0.5, zorder=6))
     lab(ax, ox + 0.0, oy - 0.06, ox - 0.3, oy - 1.3, "COLLAR (edge-on)\nunder the valve ring")
     lab(ax, ox + 0.5, oy + 0.07, ox + 0.2, oy + 1.25, "KEEPER (edge-on)\non top of collar")
     lab(ax, ox - 0.2, oy + 0.75, ox + 0.5, oy + 0.85, "BUTTON")
-    lab(ax, ox + P[0], oy + P[1] + 0.19, ox - 1.2, oy + 2.8, "shoulder bolt = TRIGGER PIVOT (in the slot)")
+    lab(ax, ox + P[0], oy + P[1] + 0.19, ox - 1.2, oy + 2.8, "clevis pin = TRIGGER PIVOT (in a pivot lobe)")
     lab(ax, ox + 0.0, oy + 1.0, ox + 0.4, oy + 2.2, "trigger NOSE rests on top of button")
-    lab(ax, ox - 1.0, oy + 0.6, ox - 0.4, oy + 1.9, "angle CLIP (far side, dashed)")
-    lab(ax, ox - 4.8, oy - 2.6, ox - 6.0, oy - 1.4, "HANDLE / FRAME plate\n(grip, add wood scales)")
-    lab(ax, ox - 3.1, oy - 2.1, ox - 2.6, oy - 3.7, "TRIGGER finger arm:\npull back toward grip\n= nose pushes button down")
+    lab(ax, ox + TABS[1][0], oy - 0.2, ox - 1.9, oy - 1.3, "2 TABS through the collar,\nhitch pin clip under each")
+    lab(ax, ox + S[0], oy + S[1] + 0.19, ox - 4.6, oy + 2.3, "UP-STOP: nylon spacer on a button screw, the trigger tail rests on it")
+    lab(ax, ox - 4.7, oy - 2.6, ox - 6.0, oy - 1.4, "HANDLE / FRAME plate\n(grip: printed PETG\nsleeve over the back\nedge, 2 screw posts)")
+    lab(ax, ox - 2.5, oy - 2.2, ox - 2.1, oy - 4.3, "TRIGGER bar: 1/8\" plate with a printed PETG sleeve\nover its front edge (5/8\" round), 2 screw posts.\nWhole hand pulls it back = nose pushes button down")
     ax.text(0.5, 0.9, "Can drawn as a 65 mm (2-9/16\") Rust-Oleum can. Button 5/8\" above the valve ring.", fontsize=6.5)
     pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p3.png"), dpi=80)
 
@@ -231,26 +434,41 @@ with PdfPages(OUT) as pdf:
     fill(ax, keeper, ox, oy, "#c9e6c3", alpha=0.85, z=2)
     ax.add_patch(plt.Circle((ox, oy), 0.64, fc="none", ec="#555555", lw=0.6, ls="--", zorder=3))
     ax.add_patch(plt.Circle((ox, oy), 0.33, fc="white", ec="#777777", lw=0.6, zorder=3))
-    fill(ax, box(-1.80, 0.22, -0.70, 0.97), ox, oy, "#e8e8e8", ec="#555555", z=3)
-    fill(ax, box(-5.56, 0.095, -0.80, 0.22), ox, oy, "#f3d9b1", z=4)
+    for x0, x1 in TABS:
+        fill(ax, box((x0 + x1) / 2 - 0.03, FMID - 0.28, (x0 + x1) / 2 + 0.03, FMID + 0.28), ox, oy, "#555555", z=3.5)
+    fill(ax, box(frame.bounds[0], 0.095, -0.80, 0.22), ox, oy, "#f3d9b1", z=4)
     tb = trig_on.bounds
-    fill(ax, box(tb[0], -0.0625, tb[2], 0.0625), ox, oy, "#bfbfbf", z=5)
-    fill(ax, box(-2.35, -0.20, -2.15, 0.10), ox, oy, "#555555", z=6)
+    fill(ax, box(tb[0], TY0, tb[2], TY1), ox, oy, "#bfbfbf", z=5)
+    tsb = affinity.translate(trig_sleeve, *P).bounds
+    fill(ax, box(tsb[0], TY0 - HDPE, tsb[2], TY1 + HDPE), ox, oy, "#3a3a3a", z=5)          # v0.95 sleeve wraps the bar
+    gsb = grip_sleeve.bounds
+    fill(ax, box(gsb[0], 0.095 - HDPE, gsb[2], 0.22 + HDPE), ox, oy, "#3a3a3a", z=4)
+    fill(ax, box(P[0] - 0.10, -0.20, P[0] + 0.10, 0.10), ox, oy, "#555555", z=6)
+    fill(ax, box(S[0] - 0.10, -0.20, S[0] + 0.10, 0.10), ox, oy, "#555555", z=6)
     lab(ax, ox + 0.45, oy + 0.45, ox - 0.3, oy + 2.4, "valve ring sits in the keyhole SEAT\n(center of the can)")
-    lab(ax, ox + 0.6, oy - 1.8, ox - 4.2, oy - 2.9, "KEEPER: slide toward the can, tighten thumbscrew.\nSlide away (down the page) to take it off.")
-    lab(ax, ox, oy - 2.45, ox - 1.8, oy - 2.6, "thumbscrew")
-    lab(ax, ox - 1.2, oy + 0.8, ox - 2.6, oy + 1.9, "angle CLIP: bolts down into collar\nand sideways into handle plate")
+    for gx, gy in GUIDES:
+        ax.add_patch(plt.Circle((ox + gx, oy - gy), 0.219, fc="#cfcfd4", ec="k", lw=0.5, zorder=3))
+    ax.add_patch(plt.Circle((ox, oy - PIN_Y), 0.19, fc="#777777", ec="k", lw=0.5, zorder=3))
+    lab(ax, ox - 0.6, oy - 1.3, ox - 4.2, oy - 2.9, "KEEPER: slide toward the can until it stops, drop in the pin.\nPull the pin, slide away (down the page) to take it off.")
+    lab(ax, ox, oy - PIN_Y - 0.16, ox - 1.8, oy - 2.95, "clevis pin (clip under the collar)")
+    lab(ax, ox + GUIDES[1][0], oy - GUIDES[1][1] - 0.2, ox - 3.0, oy - 3.4, "2 guide posts")
+    lab(ax, ox + GUIDES[0][0] - 0.1, oy - GUIDES[0][1] - 0.19, ox - 2.12, oy - 3.33, "")
+    lab(ax, ox + TABS[1][0], oy + 0.3, ox - 2.6, oy + 1.9, "handle TABS in the collar slots,\nclips under the collar (dark)")
     lab(ax, ox - 3.2, oy + 0.16, ox - 4.9, oy + 1.0, "HANDLE plate (on edge)")
+    lab(ax, ox + 0.0, oy - 0.03, ox - 0.9, oy - 0.9, "TRIGGER nose (on edge,\non the can's centerline)")
     lab(ax, ox - 2.6, oy - 0.03, ox - 5.4, oy - 1.0, "TRIGGER (on edge, on the can's centerline)")
-    lab(ax, ox - 2.25, oy - 0.2, ox - 3.9, oy - 1.9, "shoulder bolt through trigger\n+ handle; nylon washer between")
+    lab(ax, ox + P[0], oy - 0.2, ox - 3.6, oy - 1.9, "pivot clevis pin (lobed holes) +\nup-stop screw (slot)")
     steps = ("ASSEMBLY ORDER\n"
              "1. Collar on can: pull keeper back, drop collar over the valve ring at the big hole, slide it so the ring sits in the seat.\n"
-             "2. Keeper: slide it toward the can until the notch hugs the ring, tighten the thumbscrew.\n"
-             "3. Handle plate stands on edge, its notch over the back edge of the collar, just left of the centerline.\n"
-             "4. Angle clip on the left side of the handle plate: 2 bolts down through clip + collar, 2 bolts sideways through clip + handle.\n"
-             "5. Trigger on the right side of the handle (on the centerline): shoulder bolt through trigger, nylon washer, handle slot, nut.\n"
-             "6. Turn the button so the nozzle points forward. Slide the pivot in its slot until the nose just touches the button, tighten the nut.\n"
-             "For a first rough fit, any bolt works as the pivot and C-clamps can stand in for the angle clip.")
+             "2. Keeper: slide it toward the can until it stops, drop the clevis pin in, push its hitch clip through under the collar.\n"
+             "3. Handle plate: drop its 2 tabs into the SEAT slots (or the BIG-HOLE slots for a can that only fits the big hole).\n"
+             "4. Push a hitch pin clip through the hole in each tab under the collar until its bent leg snaps around the tab. No bolts.\n"
+             "5. Trigger on the right side of the handle: clevis pin (shim under its head) through trigger, nylon washer, a pivot lobe; clip.\n"
+             "6. Up-stop: button screw through the nylon spacer and the up-stop slot from the trigger side, #10 washer + locknut on the far side.\n"
+             "7. Sleeves: slide one onto the trigger bar's front edge and one onto the grip's back edge, a 5/8\" screw post through each hole.\n"
+             "8. Turn the button so the nozzle points forward. Pick the pivot lobe where the nose just touches the button.\n"
+             "    Then slide the up-stop up under the tail until it touches, tighten. The trigger now can't flip up.\n"
+             "For a first rough fit, any bolt works as the pivot and a bent nail works as a pin.")
     ax.text(0.5, 1.0, steps, fontsize=6.5, va="bottom")
     pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p4.png"), dpi=80)
 
@@ -259,7 +477,8 @@ with PdfPages(OUT) as pdf:
     fig, ax = newpage("KEEPER DETAIL: cut through the middle of the can, looking at the nozzle (not a template)",
         "The collar is a flat plate UNDER the valve ring. On the keyhole side there's a gap under the ring (that's how the ring got in).\n"
         "The keeper is a small flat plate lying ON TOP of the collar. It slides sideways along its slot until its curved notch pushes\n"
-        "against the side of the ring, closing the gap. One thumbscrew goes down through the keeper's slot into a nut under the collar.")
+        "against the side of the ring, closing the gap. 2 short screw posts in 2 slots guide it (it can't twist or fall off), and a stainless\n"
+        "clevis pin drops through the keeper and the collar, with a hitch pin clip under the collar. No thumbscrew, nothing to tighten.")
 
     def r(ax, y0, z0, y1, z1, ox, oy, fc, ec="k", lw=0.7, ls="-", zo=2):
         ax.add_patch(plt.Rectangle((ox + K * y0, oy + K * z0), K * (y1 - y0), K * (z1 - z0), fc=fc, ec=ec, lw=lw, ls=ls, zorder=zo))
@@ -272,41 +491,351 @@ with PdfPages(OUT) as pdf:
         r(ax, -0.64, 0, 0.64, 0.14, ox, oy, "#bdbdbd", ec="#777777", zo=1)
         r(ax, -0.33, 0.14, 0.33, 0.765, ox, oy, "white", ec="#777777", zo=1)
         # collar section at x=0: keyhole spans y -1.4875..+0.5625
-        r(ax, -2.80, -0.125, -1.4875, 0, ox, oy, "#9ec5ea")
-        r(ax, 0.5625, -0.125, 1.00, 0, ox, oy, "#9ec5ea")
-        # keeper section: material from notch edge (-0.65) to -2.75, slot gap -0.85..-2.55 (centers 0.95..2.45)
+        r(ax, -2.80, -CT, -1.4875, 0, ox, oy, "#9ec5ea")
+        r(ax, 0.5625, -CT, 1.00, 0, ox, oy, "#9ec5ea")
+        # collar pin hole and guide post holes are cut too (posts sit behind the cut, dashed)
         k0 = shift
-        r(ax, -2.75 + k0, 0, -0.65 + k0, 0.125, ox, oy, "#c9e6c3")
-        # thumbscrew at y=-2.45: shank, knurled head, washer, nut under collar
-        y = -2.45
-        r(ax, y - 0.095, -0.36, y + 0.095, 0.17, ox, oy, "#777777", zo=3)
-        r(ax, y - 0.30, 0.17, y + 0.30, 0.42, ox, oy, "#555555", zo=3)
-        r(ax, y - 0.22, 0.125, y + 0.22, 0.17, ox, oy, "#999999", zo=3)
-        r(ax, y - 0.19, -0.30, y + 0.19, -0.125, ox, oy, "#555555", zo=3)
+        edges = [-KL]
+        for hy in sorted(-(PIN_Y - o) for o in (0.0, BIG, K_OPEN)):     # keeper pin holes at x = 0
+            edges += [hy - DP / 2, hy + DP / 2]
+        edges.append(-0.65)
+        for a, b in zip(edges[::2], edges[1::2]):
+            r(ax, a + k0, 0, b + k0, 0.125, ox, oy, "#c9e6c3")
+        r(ax, -PIN_Y - DP / 2, -CT - 0.002, -PIN_Y + DP / 2, 0.002, ox, oy, "white", ec="none", zo=2)
+        for gx, gy in GUIDES:   # 1/4" screw post: head on the keeper, barrel through keeper slot + collar, head under the collar
+            for (y0, z0, y1, z1) in ((-gy - 0.219, 0.125, -gy + 0.219, 0.185), (-gy - 0.094, -CT - 0.005, -gy + 0.094, 0.125),
+                                     (-gy - 0.219, -CT - 0.06, -gy + 0.219, -CT)):
+                r(ax, y0, z0, y1, z1, ox, oy, "none", ec="#888888", lw=0.6, ls="--", zo=4)
+        # clevis pin: head on the keeper, 3/16" shank, hitch clip wire (end-on dot) through its hole under the collar
+        y = -PIN_Y
+        r(ax, y - 0.19, 0.125, y + 0.19, 0.185, ox, oy, "#777777", zo=5)
+        r(ax, y - 0.125, 0.125 - 0.50, y + 0.125, 0.125, ox, oy, "#999999", zo=5)
+        ax.add_patch(plt.Circle((ox + K * y, oy + K * (0.125 - 0.41)), K * 0.04, fc="#333333", ec="k", lw=0.4, zorder=6))
+        ax.add_patch(plt.Circle((ox + K * (y - 0.17), oy + K * (0.125 - 0.41)), K * 0.04, fc="#333333", ec="k", lw=0.4, zorder=6))
         ax.text(0.5, oy + K * 1.35, title, fontsize=9, weight="bold")
         return ox, oy
 
     ox, oy = panel(5.6, 7.2, 0.0, "LOCKED (using it)")
-    lab(ax, ox + K * -0.66, oy + K * 0.07, ox + K * -0.9, oy + K * 1.05, "keeper notch pushes\non the side of the ring")
+    lab(ax, ox + K * -0.66, oy + K * 0.07, ox + K * -0.9, oy + K * 1.05, "keeper notch hugs\nthe side of the ring")
     lab(ax, ox + K * 0.8, oy - K * 0.06, ox + K * 1.0, oy - K * 0.9, "collar lip under the ring\n(other side of the keyhole)")
-    lab(ax, ox + K * -1.4, oy + K * 0.06, ox + K * -2.2, oy + K * 1.05, "KEEPER (green)\nlies on top of collar")
+    lab(ax, ox + K * -1.75, oy + K * 0.06, ox + K * -2.2, oy + K * 1.05, "KEEPER (green)\nlies on top of collar")
     lab(ax, ox + K * -2.0, oy - K * 0.06, ox + K * -1.6, oy - K * 0.95, "COLLAR (blue)")
-    lab(ax, ox + K * -2.75, oy + K * 0.35, ox + K * -4.4, oy + K * 0.85, "thumbscrew")
-    lab(ax, ox + K * -2.64, oy - K * 0.22, ox + K * -4.4, oy - K * 0.75, "10-24 nut glued\nunder the collar")
+    lab(ax, ox + K * -2.2, oy + K * 0.185, ox + K * -4.4, oy + K * 0.85, "CLEVIS PIN 1/4\" (lock),\nin the seat-lock hole")
+    lab(ax, ox + K * -2.2, oy - K * 0.33, ox + K * -4.4, oy - K * 0.75, "HITCH PIN CLIP (end-on) through\nthe pin, under the collar")
+    lab(ax, ox + K * -2.5, oy + K * 0.16, ox + K * -3.4, oy + K * 1.25, "guide posts (behind the cut, dashed)")
     lab(ax, ox + K * 0.25, oy + K * 0.6, ox + K * 0.7, oy + K * 1.05, "button")
 
-    ox, oy = panel(5.6, 3.9, -1.50, "OPEN (putting it on / taking it off)")
-    lab(ax, ox + K * -2.6, oy + K * 0.12, ox + K * -1.3, oy + K * 0.95, "keeper slid 1-1/2\" away from the can:\nthe keyhole is open so the ring can pass")
-    ax.annotate("", (ox + K * -2.4, oy + K * -0.45), (ox + K * -1.2, oy + K * -0.45), arrowprops=dict(arrowstyle="->", lw=0.7))
-    ax.text(ox + K * -2.3, oy + K * -0.62, "slide", fontsize=6)
+    ox, oy = panel(5.6, 3.9, -1.10, "OPEN (putting it on / taking it off)")
+    lab(ax, ox + K * -3.2, oy + K * 0.12, ox + K * -1.0, oy + K * 1.05, "keeper slid %.2f\" away from the can (to the slot ends):\nthe keyhole is open so the ring can pass. The pin can\npark in the keeper's 3rd hole so it holds it open." % K_OPEN)
+    ax.annotate("", (ox + K * -1.6, oy + K * -0.62), (ox + K * -0.6, oy + K * -0.62), arrowprops=dict(arrowstyle="->", lw=0.7))
+    ax.text(ox + K * -1.5, oy + K * -0.80, "slide", fontsize=6)
     ax.text(0.5, 0.9,
         "HOW TO USE IT\n"
-        "1. Loosen the thumbscrew a couple of turns. Slide the keeper away from the can (to the left here).\n"
+        "1. Pull the hitch clip and the pin. Slide the keeper away from the can until it stops (to the left here).\n"
         "2. Set the collar over the can so the valve ring comes up through the BIG round hole, then slide the collar sideways\n"
         "    so the ring moves into the small round seat. The collar plate is now under the ring.\n"
-        "3. Slide the keeper back toward the can until its curved notch touches the ring. Tighten the thumbscrew.\n"
-        "    The ring is now trapped: collar underneath, keeper notch on the open side. It can't slide or twist.\n"
-        "The keeper only moves sideways along its slot. The thumbscrew never comes out, it just loosens so the keeper can slide.",
+        "3. Slide the keeper back toward the can until it stops (seat can: the slot ends stop it; big-hole can: the ring stops it).\n"
+        "    A keeper hole is now over the collar's pin hole. Drop the pin in, push the hitch clip through it under the collar.\n"
+        "The ring is now trapped: collar underneath, keeper notch on the open side. The 2 guide posts sit 0.50\" apart along the\n"
+        "slide, so the keeper can't spin, and they keep it on the collar even with the pin out. 3 keeper holes, 1 collar hole:\n"
+        "seat lock, big-hole lock, and parked open. Whichever spot the keeper stops at, a hole lines up, so there's no wrong hole.",
         fontsize=7, va="bottom")
     pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p5.png"), dpi=80)
+    # ---------- Trigger motion + sections (moving parts) ----------
+    BT = 0.15  # assumed button travel for the drawing, inches (measure a real can)
+    th = math.degrees(BT / NOSE)
+    fig, ax = newpage("TRIGGER DETAIL: rest vs. full squeeze, and sections (not templates)",
+        "Side view 1:1. Solid gray = trigger at rest (tail on the up-stop). Dashed = full squeeze, drawn for a button that moves %.2f\".\n"
+        "The button bottoming out ends the squeeze, so the trigger never reaches the grip. Only the up-stop is a hard stop." % BT)
+    ox, oy = 6.9, 7.8
+    grip_front = LineString([(-3.55, -0.50), (-4.20, -4.55)])
+    rest = trig_on
+    full = affinity.rotate(trig_on, -th, origin=P)
+    fill(ax, frame, ox, oy, "#f6e6cc", ec="#b9a07a", z=1)
+    fill(ax, rest, ox, oy, "#bfbfbf", z=3)
+    fill(ax, grip_sleeve, ox, oy, "#3a3a3a", alpha=0.85, z=2)
+    sl_rest = affinity.translate(trig_sleeve, *P)
+    sl_full = affinity.rotate(sl_rest, -th, origin=P)
+    fill(ax, sl_rest, ox, oy, "#3a3a3a", alpha=0.85, z=3.5)
+    for ring in [sl_full.exterior]:
+        x, y = ring.xy
+        ax.plot([v + ox for v in x], [v + oy for v in y], "k--", lw=0.7, zorder=4)
+    for ring in [full.exterior] + list(full.interiors):
+        x, y = ring.xy
+        ax.plot([v + ox for v in x], [v + oy for v in y], "k--", lw=0.7, zorder=4)
+    fill(ax, box(-0.33, 0.14, 0.33, 0.765), ox, oy, "white", ec="#777777", z=2)
+    ax.add_patch(plt.Circle((ox + P[0], oy + P[1]), 0.19, fc="#555555", zorder=6))
+    ax.add_patch(plt.Circle((ox + S[0], oy + S[1]), STOP_R, fc="#c0392b", ec="k", lw=0.5, zorder=6))
+    g_rest, g_full = rest.distance(grip_front), full.distance(grip_front)
+    lab(ax, ox + S[0], oy + S[1] - 0.12, ox - 5.9, oy + 0.2, "UP-STOP: 10 mm nylon spacer on a\nbutton screw. The tail rests on it, so\nthe trigger can't swing up past the button.")
+    lab(ax, ox + P[0] + NOSE, oy + P[1] - 0.45, ox + 0.2, oy + 1.9, "nose: %.2f\" down\nat full squeeze" % BT)
+    lab(ax, ox - 2.95, oy - 3.95, ox - 1.75, oy - 4.25,
+        "gap to grip: %.2f\" at rest, %.2f\" at full squeeze\n(closest point, metal bar to the grip's front edge)" % (g_rest, g_full))
+    def span_at(sc, z):           # level span, back of the grip sleeve to the front of the trigger sleeve, mm
+        cut = lambda gm: gm.intersection(LineString([(-9, z), (9, z)])).bounds
+        return (cut(sc)[2] - cut(grip_sleeve)[0]) * 25.4
+    for (z, nm) in zip(FINGER_Z, ("index", "middle", "ring", "little")):
+        ax.plot([ox + grip_sleeve.bounds[0] - 0.1, ox + sl_rest.bounds[2] + 0.1], [oy + z, oy + z], ":", color="#2e7d32", lw=0.6, zorder=7)
+        ax.text(ox + sl_rest.bounds[2] + 0.15, oy + z - 0.04, "%s: %.0f mm rest, %.0f mm squeezed" % (nm, span_at(sl_rest, z), span_at(sl_full, z)),
+                fontsize=5.5, color="#2e7d32", zorder=7)
+    ax.text(0.5, 3.1, "GRIP SPAN (green lines, level, back of the grip sleeve to the front of the trigger sleeve). Lee et al. 2009 (46 men): 50-55 mm\n"
+            "grips strongest and most comfortable (about 27-29% of hand length), and the middle/ring fingers want the widest span. Sized for\n"
+            "an average man's hand (188 mm): squeezed span 53-55 mm, widest at the middle/ring fingers. Dark = printed sleeves (dashed = squeezed).", fontsize=6.5, va="top")
+
+    # Section A-A: through the trigger sleeve at a post, looking down (2x). n (forward) to the right, y up.
+    K2 = 2.0
+    def rr(x0, y0, w, h, fc, ec="k", hatch=None):
+        ax.add_patch(plt.Rectangle((x0, y0), w * K2, h * K2, fc=fc, ec=ec, lw=0.6, hatch=hatch, zorder=3))
+    sx, sy = 0.9 + K2 * W, 0.95 + K2 * SLV_R
+    ax.text(0.5, 2.45, "SECTION A-A through the trigger sleeve at a post, looking down (2x size)", fontsize=8, weight="bold")
+    fill(ax, affinity.scale(TRIG_SEC, K2, K2, origin=(0, 0)), sx, sy, "#3a3a3a", z=2)
+    rr(sx - K2 * W, sy - K2 * 0.0625, W, 0.125, "#bfbfbf", hatch="////")                      # trigger plate in the slot
+    rr(sx - K2 * (W / 2 + 0.094), sy - K2 * (SLV_R + 0.03), 0.1875, 2 * SLV_R + 0.06, "#c9c9c9")   # screw post barrel
+    rr(sx - K2 * (W / 2 + 0.16), sy + K2 * SLV_R, 0.32, 0.05, "#888888")                   # post head
+    rr(sx - K2 * (W / 2 + 0.16), sy - K2 * (SLV_R + 0.05), 0.32, 0.05, "#888888")          # screw head
+    ax.text(sx + K2 * (SLV_T + BOW) + 0.1, sy + 0.25, "finger side: full round,\n5/8\" across", fontsize=6)
+    ax.text(sx + K2 * (SLV_T + BOW) + 0.1, sy - 0.12, "front wall %.2f-%.2f\"" % (SLV_T, SLV_T + BOW), fontsize=6)
+    ax.text(sx - K2 * W, sy - K2 * SLV_R - 0.33, "TRIGGER plate 1/8\" in a %.3f\" slot (open toward the grip);\n5/8\" aluminum screw post clamps the sleeve walls." % SLV_SLOT, fontsize=6)
+
+    # Up-stop stack, looking down (2x)
+    tx, ty = 4.9, 0.7
+    ax.text(5.0, 2.45, "UP-STOP STACK, looking down (2x)", fontsize=8, weight="bold")
+    rr(tx, ty + K2 * 0.32, 0.95, 0.125, "#f3d9b1", hatch="////")             # frame plate
+    rr(tx + K2 * 0.303, ty + K2 * 0.123, 0.394, 0.197, "#222222")          # nylon spacer, 10 mm OD x 5 mm
+    rr(tx + K2 * 0.31, ty + K2 * 0.033, 0.38, 0.09, "#555555")             # button head
+    rr(tx + K2 * 0.405, ty + K2 * 0.445, 0.19, 0.303, "#777777")           # thread, ends 0.53" past the head
+    rr(tx + K2 * 0.28, ty + K2 * 0.445, 0.44, 0.049, "#9a9a9a")            # v0.8: #10 flat washer
+    rr(tx + K2 * 0.31, ty + K2 * 0.494, 0.38, 0.236, "#555555")            # nylon locknut
+    rr(tx + K2 * 0.70, ty + K2 * 0.135, 0.25, 0.125, "#bfbfbf", hatch="////")  # trigger tail beside it
+    ax.text(tx + K2 * 1.05, ty + K2 * 0.36, "HANDLE plate (stop slot)", fontsize=6)
+    ax.text(tx + K2 * 1.05, ty + K2 * 0.17, "trigger tail lands\non the spacer", fontsize=6)
+    ax.text(tx + K2 * 1.05, ty + K2 * 0.60, "#10 washer + 10-24 locknut", fontsize=6)
+    ax.text(tx + K2 * 1.05, ty - K2 * 0.02, "10-24 x 5/8\" button screw +\nnylon spacer 5 mm x 10 mm OD", fontsize=6)
+    pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p6.png"), dpi=80)
+    # ---------- OPEN / CLOSED checks: every moving part in both end states, with clearances computed ----------
+    RING = 0.64                    # valve ring radius (32.5 mm cup)
+    TS = collar_holes[0][1]        # lock pin y (negative = keeper side)
+    PIN_R, POST_R = 0.25 / 2, 0.1875 / 2      # 1/4" clevis pin, 3/16" screw-post barrel
+    big = (0, -0.80)               # keyhole big hole center
+
+    def keeper_at(off):            # keeper slid `off` inches away from the can (toward -y)
+        return affinity.translate(keeper, 0, -off)
+
+    off_open = K_OPEN              # guide posts at the near ends of their slots
+    posts = [Point(x, -y).buffer(POST_R, 32) for x, y in GUIDES]
+
+    def pin_free(off):             # a keeper hole sits over the collar pin hole, so the pin drops through both
+        return keeper_at(off).intersection(Point(0, TS).buffer(PIN_R, 32)).area < 1e-9
+
+    def posts_free(off):           # both guide posts inside their keeper slots
+        return all(keeper_at(off).intersection(p).area < 1e-9 for p in posts)
+    ring_seat, ring_big = Point(0, 0).buffer(RING, 64), Point(*big).buffer(RING, 64)
+    path = ring_seat.union(ring_big).union(box(-RING, big[1], RING, 0))
+    k_open, k_closed = keeper_at(off_open), keeper_at(0.0)
+    checks = []
+    def chk(part, state, what, val, ok, unit='"'):
+        checks.append((part, state, what, ("%.2f%s" % (val, unit)) if val is not None else "", "PASS" if ok else "FAIL"))
+    d = k_open.distance(path)
+    chk("Keeper", "OPEN", "ring slides seat <-> big hole without touching the keeper", d, d > 0.02)
+    chk("Keeper", "CLOSED", "slot ends stop it with the notch on the ring", k_closed.distance(ring_seat), k_closed.distance(ring_seat) < 0.03)
+    endp = GSLOT / 2 - POST_R      # post-to-slot-end play at each stop
+    chk("Keeper", "CLOSED", "slot ends are the stop (play past the lock spot)", endp, posts_free(0.0) and not posts_free(-endp - 0.002))
+    chk("Keeper", "OPEN", "stops at the open end of the slots (%.2f\" travel)" % K_OPEN, K_OPEN, posts_free(K_OPEN) and not posts_free(K_OPEN + endp + 0.002))
+    chk("Keeper", "ALL", "lock pin drops through: seat lock, big-hole lock, parked open", None,
+        all(pin_free(o) for o in (0.0, BIG, K_OPEN)))
+    mids = [o / 20 * K_OPEN for o in range(21)]
+    chk("Keeper", "ALL", "posts stay in the slots over the whole slide", None, all(posts_free(o) for o in mids))
+    tw = math.degrees(2 * (GSLOT / 2 - POST_R) / abs(GUIDES[0][1] - GUIDES[1][1]))
+    chk("Keeper", "ALL", "twist with the pin out (staggered posts)", tw, tw < 3, unit=" deg")
+    web = min(keeper.exterior.distance(Polygon(i)) for i in keeper.interiors)
+    web = min([web] + [Polygon(a).distance(Polygon(b)) for k, a in enumerate(keeper.interiors) for b in keeper.interiors[k + 1:]])
+    chk("Keeper", "ALL", "metal between any two holes/slots/edges", web, web > 0.09)
+    chk("Keeper", "OPEN", "big hole clears the ring (1.375 vs %.3f)" % (2 * RING), 1.375 / 2 - RING, 1.375 / 2 > RING)
+
+    can_side = Polygon([(-1.28, -0.95), (-1.15, -0.85), (-1.0, -0.65), (-0.75, -0.35), (-0.62, 0.0), (0.62, 0.0), (0.75, -0.35),
+                        (1.0, -0.65), (1.15, -0.85), (1.28, -0.95), (1.28, -6), (-1.28, -6)])
+    collar_side = box(-1.70, -CT, 1.00, 0)
+    grip_front = LineString([(-3.55, -0.50), (-4.20, -4.55)])
+    rows = {}
+    for dz in PIV:
+        P2 = (P[0], P[1] + dz)
+        rest = affinity.translate(trigger, *P2)
+        full = affinity.rotate(rest, -math.degrees(BT / NOSE), origin=P2)
+        sc_rest = affinity.translate(trig_sleeve, *P2)
+        sc_full = affinity.rotate(sc_rest, -math.degrees(BT / NOSE), origin=P2)
+        for st, sc in (("REST", sc_rest), ("FULL", sc_full)):
+            rows.setdefault((st, "trigger sleeve clears the handle plate"), []).append((sc.distance(frame), sc.distance(frame) > 0.1))
+            rows.setdefault((st, "trigger sleeve clears the grip sleeve"), []).append((sc.distance(grip_sleeve), sc.distance(grip_sleeve) > 0.1))
+        if dz == 0.0:
+            stop = Point(S).buffer(STOP_R, 64)
+            chk("Trigger", "REST", "tail sits on the up-stop spacer", rest.distance(stop), rest.distance(stop) < 0.01)
+            nose_low = P2[1] - 0.45
+            chk("Trigger", "REST", "nose bump touches the button top (0.765)", nose_low - 0.765, abs(nose_low - 0.765) < 0.01)
+            chk("Trigger", "FULL", "tail lifts off the up-stop", full.distance(stop), full.distance(stop) > 0.02)
+            chk("Up-stop", "REST", "spacer longer than trigger + nylon washer (0.125 + 0.060)", 0.197 - 0.185, 0.197 > 0.185)
+        for st, t in (("REST", rest.union(sc_rest)), ("FULL", full.union(sc_full))):
+            for what, val, lim in (("clears the collar", t.distance(collar_side), 0.05),
+                                   ("gap to grip (must stay open)", t.distance(grip_front), 0.1),
+                                   ("finger room to the can", t.distance(can_side), 0.4)):
+                rows.setdefault((st, what), []).append((val, val > lim))
+    tab_geoms = [box(x0, TAB_BOT, x1, 0) for x0, x1 in TABS]
+    pins = [box((x0 + x1) / 2 - 0.05, TAB_BOT - CLIP_DROP, (x0 + x1) / 2 + 0.05, PIN_Z + 0.04) for x0, x1 in TABS]   # clip loop around the tab
+    d = min(t.distance(can_side) for t in tab_geoms + pins)
+    chk("Tabs", "ON CAN", "tab bottoms and clips clear the can top (drawn can)", d, d > 0.05)
+    rim = min(min((x1 - x0 - PIN_D) / 2, pz - PIN_D / 2 - TAB_BOT) for (x0, x1), pz in zip(TABS, PIN_ZS))
+    chk("Tabs", "ON CAN", "metal around each pin hole (sides and below)", rim, rim >= 0.09)
+    gap = (PIN_Z - PIN_D / 2) - (-CT - WIRE)
+    chk("Tabs", "ON CAN", "rear clip: wire pinched under the 0.090 collar (play)", gap, abs(gap) < 0.001)
+    chk("Tabs", "ON CAN", "front clip: preload, plate pulled down (interference)", PRELOAD, 0 < PRELOAD <= 0.006)
+    def min_hole(g):              # smallest hole or slot width in a part (inscribed size of each interior)
+        return min(2 * Polygon(i).exterior.distance(Polygon(i).centroid) if Polygon(i).area < 0.2 else 1.0 for i in g.interiors)
+    mh = min(min_hole(collar) - CT, min_hole(keeper) - 0.125, min_hole(frame) - 0.125, min_hole(trigger) - 0.125)
+    chk("Cutting", "ALL", "every hole/slot at least the sheet thickness (SendCutSend minimum)", max(mh, 0.0), mh >= -0.0005)
+    # v0.95 sleeves and grip span
+    ch = trig_sleeve.intersection(trigger).difference(along_bar(TS0 - 0.2, L + 0.2, W + 0.002))
+    chk("Sleeves", "ALL", "trigger sleeve slides on: no metal in its channel but the bar", ch.area, ch.area < 1e-6, unit=" sq in")
+    def spans(ang):                # level span, back of the grip sleeve to the front of the trigger sleeve, per finger (mm)
+        sc = affinity.rotate(affinity.translate(trig_sleeve, *P), ang, origin=P)
+        cut = lambda gm, z: gm.intersection(LineString([(-9, z), (9, z)])).bounds
+        return [(cut(sc, z)[2] - cut(grip_sleeve, z)[0]) * 25.4 for z in FINGER_Z]
+    sp = spans(-math.degrees(BT / NOSE))
+    chk("Grip", "FULL", "span index/middle/ring/little %s mm (target 51-55, Lee 2009)" % "/".join("%.0f" % v for v in sp),
+        None, all(50.5 <= v <= 55.5 for v in sp) and max(sp[1:3]) >= max(sp[0], sp[3]))
+    sp = spans(0.0)
+    chk("Grip", "REST", "span index/middle/ring/little %s mm (opens as the trigger rests)" % "/".join("%.0f" % v for v in sp), None, max(sp) < 68)
+    neck = 2 * math.sqrt((DF / 2) ** 2 - (min(b - a for a, b in zip(PIV, PIV[1:])) / 2) ** 2)
+    chk("Pivot", "ALL", "pin can't slide between lobes (neck vs 0.250 pin)", neck, neck < DF - 0.04)
+    lobes = shapely.ops.unary_union([hole(P[0], P[1] + dz, DF) for dz in PIV])
+    web = min(lobes.distance(Polygon(frame.exterior).exterior), Point(S[0], S[1]).buffer(0.30).distance(lobes))
+    chk("Pivot", "ALL", "metal from the pivot lobes to the edge and the up-stop slot", web, web > 0.09)
+    for dz in PIV:
+        P2 = (P[0], P[1] + dz)
+        for st, ang in (("REST", 0.0), ("FULL", -math.degrees(BT / NOSE))):
+            t = affinity.rotate(affinity.translate(trigger, *P2), ang, origin=P2).union(
+                affinity.rotate(affinity.translate(trig_sleeve, *P2), ang, origin=P2))
+            rows.setdefault((st, "clears the tabs + clips"), []).append(
+                (min(t.distance(g) for g in tab_geoms + pins), min(t.distance(g) for g in tab_geoms + pins) > 0.1))
+    for (st, what), vals in sorted(rows.items(), key=lambda kv: (kv[0][1], kv[0][0] != "REST")):
+        checks.append(("Trigger", st, what + " (pivot lobe 1/2/3/4)", " / ".join("%.2f" % v for v, _ in vals) + '"',
+                       "PASS" if all(ok for _, ok in vals) else "FAIL"))
+
+    # v0.7: two can positions. Ring in the SEAT (tabs in the seat slots) or ring in the BIG HOLE (tabs in the
+    # 2nd holes, so the handle and trigger sit 0.80" toward the keeper). Plan view, at keeper height (z 0..0.125).
+    def footprint(g, dy, y0, y1, z0=0.0, z1=0.145):
+        band = g.intersection(box(-10, z0, 10, z1))
+        if band.is_empty:
+            return None
+        bx = band.bounds
+        return box(bx[0], y0 + dy, bx[2], y1 + dy)
+    MODES = (("SEAT", 0.0, 0.0), ("BIG HOLE", -BIG, BIG))   # name, handle shift in y, keeper offset when locked
+    mode_rows = []
+    mstart = len(checks)
+    for name, dy, k_lock in MODES:
+        ring = Point(0, dy).buffer(RING, 64)
+        frame_p = footprint(frame, dy, 0.095, 0.22)
+        frame_hi = footprint(frame, dy, 0.095, 0.22, 0.0, 0.80)
+        trig_ps = []
+        for dz in PIV:
+            P2 = (P[0], P[1] + dz)
+            for ang in (0.0, -math.degrees(BT / NOSE)):
+                t = affinity.rotate(affinity.translate(trigger, *P2), ang, origin=P2)
+                fp = footprint(t, dy, TY0, TY1)
+                if fp is not None:
+                    trig_ps.append(fp)
+                for side in (1, -1):
+                    sc = affinity.rotate(affinity.translate(trig_sleeve, *P2), ang, origin=P2)
+                    y0, y1 = (TY1, TY1 + HDPE) if side > 0 else (TY0 - HDPE, TY0)
+                    fp = footprint(sc, dy, y0, y1)
+                    if fp is not None:
+                        trig_ps.append(fp)
+        k_closed_m = keeper_at(k_lock)
+        tabs_p = [box(x0, FY0 + dy, x1, FY1 + dy) for x0, x1 in TABS]
+        slots_m = [tab_slot(x0, x1, ym) for x0, x1, ym in TAB_SLOTS if abs(ym - (FMID + dy)) < 1e-6]
+        fit = all(sl.contains(tb) for sl, tb in zip(slots_m, tabs_p))
+        play = min(SLOT_W - (FY1 - FY0), min(sl.bounds[2] - tb.bounds[2] for sl, tb in zip(slots_m, tabs_p)))
+        chk("Tabs", name, "both tabs drop into their slots (snug, file to fit; play %.3f)" % play, play, fit and play > 0.002)
+        web = min(Polygon(collar.exterior).exterior.distance(sl) for sl in slots_m)
+        web = min(web, min(sl.distance(Polygon(i)) for sl in slots_m for i in collar.interiors if not Polygon(i).intersects(sl)))
+        chk("Tabs", name, "metal left around the slots (to any edge or hole)", web, web > 0.08)
+        chk("Tabs", name, "trigger nose sits over the button (handle shift %.2f)" % dy, 0.0, True)
+        chk("Keeper", name + " LOCK", "pin hole over the collar hole, posts in the slots", None, pin_free(k_lock) and posts_free(k_lock))
+        chk("Keeper", name + " LOCK", "notch reaches the ring", k_closed_m.distance(ring), k_closed_m.distance(ring) < 0.03)
+        k_open_m = keeper_at(off_open)
+        chk("Keeper", name + " OPEN", "ring clears the keeper", k_open_m.distance(ring), k_open_m.distance(ring) > 0.02)
+        trig_p = shapely.ops.unary_union(trig_ps) if trig_ps else None
+        for st, kk in (("LOCK", k_closed_m), ("OPEN", k_open_m)):
+            others = {"handle plate": frame_p, "trigger + sleeve": trig_p}
+            for what, gg in others.items():
+                if gg is None:
+                    continue
+                d = kk.distance(gg)
+                chk("Keeper", name + " " + st, "clears the " + what, d, d > 0.05)
+        d = frame_hi.distance(ring.union(Point(0, dy).buffer(0.33, 32)))
+        chk("Handle", name, "handle plate clears the ring and button", d, d > 0.05)
+        mode_rows.append((name, dy, k_lock, frame_p, trig_ps))
+    mode_checks = checks[mstart:]
+    del checks[mstart:]
+
+    fig, ax = newpage("OPEN / CLOSED CHECKS: every moving part in both end states (not templates)",
+        "Each moving part is drawn and measured at both ends of its travel, so the mechanism is proven on paper before it's cut.\n"
+        "Top row: keeper OPEN and CLOSED from above (1:1). Dashed circle = valve ring. Table: clearances computed from the template outlines.\n"
+        "Trigger FULL is drawn for a button that moves %.2f\" (BT in templates.py); the gap to the grip stays open with any normal button." % BT)
+    for (kx, ky, kk, ring, ttl) in ((2.3, 8.2, k_open, ring_big, "KEEPER OPEN: slid out to the slot ends,\nring comes up through the big hole"),
+                                    (6.0, 8.2, k_closed, ring_seat, "KEEPER CLOSED: slot ends stop it with the\nnotch on the ring, pin in")):
+        fill(ax, collar, kx, ky, "#9ec5ea", z=1)
+        fill(ax, kk, kx, ky, "#c9e6c3", alpha=0.85, z=2)
+        x, y = ring.exterior.xy
+        ax.plot([v + kx for v in x], [v + ky for v in y], "k--", lw=0.8, zorder=4)
+        ax.add_patch(plt.Circle((kx, ky + TS), 0.19, fc="#555555", zorder=5))
+        for gx, gy in GUIDES:
+            ax.add_patch(plt.Circle((kx + gx, ky - gy), 0.219, fc="#cfcfd4", ec="k", lw=0.5, zorder=5))
+        ax.text(kx - 1.7, ky + 1.35, ttl, fontsize=7, weight="bold")
+    y0, dy_ = 3.7, 0.091
+    ax.text(0.5, y0 + 0.2, "PART      STATE    CHECK", fontsize=6.5, weight="bold", family="monospace")
+    for i, (part, st, what, val, res) in enumerate(checks):
+        yy = y0 - dy_ * i
+        ax.text(0.5, yy, "%-9s %-8s %s" % (part, st, what), fontsize=5.5, family="monospace")
+        ax.text(6.9, yy, val, fontsize=5.5, family="monospace", ha="right")
+        ax.text(7.2, yy, res, fontsize=5.5, family="monospace", weight="bold", color="#2e7d32" if res == "PASS" else "#c0392b")
+    ax.text(0.5, y0 - dy_ * len(checks) - 0.05,
+            "Real-life check when the parts arrive: do each state by hand on a can (keeper open, can on, keeper closed and pinned;\n"
+            "trigger at rest on the stop, squeeze until it sprays) and confirm each PASS line above.", fontsize=6.5, va="top")
+    pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p7.png"), dpi=80)
+
+    # ---------- v0.7: two can positions (plan views + checks) ----------
+    fig, ax = newpage("TWO CAN POSITIONS: ring in the SEAT, or ring in the BIG HOLE (top view 1:1, not templates)",
+        "Most cans: the ring sits in the SEAT and the handle tabs go in the SEAT slots. A can whose ring only fits the BIG HOLE: move the tabs\n"
+        "to the second pair of slots, which moves the handle and trigger 0.80\" toward the keeper so the nose is over the button again.\n"
+        "The keeper covers both: on a seat can the slot ends stop it, on a big-hole can the ring stops it 0.80\" further out, and each spot has its own pin hole.")
+    for i, (name, dy, k_lock, frame_p, trig_ps) in enumerate(mode_rows):
+        kx, ky = 2.3 + 3.9 * i, 7.3
+        fill(ax, collar, kx, ky, "#9ec5ea", z=1)
+        fill(ax, keeper_at(k_lock), kx, ky, "#c9e6c3", alpha=0.85, z=2)
+        fill(ax, box(-2.2, 0.095 + dy, -0.80, 0.22 + dy), kx, ky, "#f3d9b1", z=4)
+        fill(ax, box(-2.2, TY0 + dy, NOSE + P[0], TY1 + dy), kx, ky, "#bfbfbf", z=5)
+        x, y = Point(0, dy).buffer(RING, 64).exterior.xy
+        ax.plot([v + kx for v in x], [v + ky for v in y], "k--", lw=0.8, zorder=6)
+        ax.add_patch(plt.Circle((kx, ky + dy), 0.33, fc="white", ec="#777777", lw=0.6, zorder=6))
+        for x0, x1 in TABS:
+            fill(ax, box((x0 + x1) / 2 - 0.03, FMID + dy - 0.28, (x0 + x1) / 2 + 0.03, FMID + dy + 0.28), kx, ky, "#333333", z=7)
+        ax.add_patch(plt.Circle((kx, ky + TS), 0.19, fc="#555555", zorder=7))
+        for gx, gy in GUIDES:
+            ax.add_patch(plt.Circle((kx + gx, ky - gy), 0.219, fc="#cfcfd4", ec="k", lw=0.5, zorder=7))
+        ax.text(kx - 1.8, ky + 1.55, "RING IN THE %s" % name, fontsize=8, weight="bold")
+        ax.text(kx - 1.8, ky + 1.30, "handle tabs: %s slots, keeper locked" % ("upper (seat)" if dy == 0 else "lower (big-hole)"), fontsize=6)
+    ax.text(0.5, 3.75, "Blue = collar, green = keeper (locked), tan = handle plate, gray strip = trigger (on edge),\n"
+            "dashed = valve ring, white = button, black bars = the 2 clips under the collar (the other 2 slots stay empty),\n"
+            "dark dot = keeper lock pin, light circles = the 2 keeper guide posts.", fontsize=6)
+    y0 = 3.3
+    ax.text(0.5, y0 + 0.2, "PART      STATE           CHECK", fontsize=6.5, weight="bold", family="monospace")
+    for i, (part, st, what, val, res) in enumerate(mode_checks):
+        yy = y0 - 0.115 * i
+        ax.text(0.5, yy, "%-9s %-15s %s" % (part, st, what), fontsize=5.5, family="monospace")
+        ax.text(7.2, yy, val, fontsize=5.5, family="monospace", ha="right")
+        ax.text(7.45, yy, res, fontsize=5.5, family="monospace", weight="bold", color="#2e7d32" if res == "PASS" else "#c0392b")
+    pdf.savefig(fig); fig.savefig(PNG.replace(".png", "-p8.png"), dpi=80)
+    for c in mode_checks:
+        print(*c)
+    for c in checks:
+        print(*c)
 print("ok")

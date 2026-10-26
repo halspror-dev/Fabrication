@@ -3,3 +3,7 @@ __pycache__/
 
 # Web research evidence (research skill)
 .research/
+
+# Build outputs
+check3d-table.txt
+last-review/
