@@ -4,7 +4,7 @@ These scripts need Python 3 plus `pip install shapely numpy scipy ezdxf manifold
 There are no 2D drawing pages or 1:1 cut templates any more: the sleeves are 3D printed and the plates are ordered cut from the DXFs.
 
 1. Run `python3 templates.py` to print every PASS/FAIL clearance check (keeper, trigger, tabs, pivot, sleeves, grip span, can positions). It ends with `ok` or `FAIL`.
-2. Run `python3 check3d.py templates.py` (needs scipy) for the real-shape 3D clearance table: every pair of parts in the 3D model, in 5 states. Pairs that touch on purpose are listed in JOINT_PARTS/TOUCH at its top.
+2. Run `python3 check3d.py templates.py` (needs scipy) for the real-shape 3D clearances: every pair of parts in the 3D model, in 5 states. It prints a short PASS/FAIL line per state; the full table goes to `check3d-table.txt` (`--full` prints it instead). Pairs that touch on purpose are listed in JOINT_PARTS/TOUCH at its top.
 3. Run `python3 render3d.py templates.py iso.pdf` to make the 3D views, the tab and keeper close-ups and the exploded views. It loads the part geometry from templates.py.
 4. DXFs (the 4 laser-cut plates): `python3 make_dxf.py templates.py OUTDIR`.
 5. STLs for printing (the 2 sleeves, plus the 4 plates at real thickness for a plastic test build, in mm): `python3 make_stl.py templates.py OUTDIR`.
@@ -15,9 +15,8 @@ Edit part shapes near the top of templates.py: the collar, keeper, frame points,
 
 Coordinates are in inches. The origin is the can's center at the collar's top surface. x points forward (the spray direction), y points to the can's left, and z points up.
 
-render3d.py is a custom z-buffer renderer. It replaced matplotlib's 3D plotting, which drew colors bleeding through parts. Checking a build without loading every image:
+render3d.py is a custom z-buffer renderer. It replaced matplotlib's 3D plotting, which drew colors bleeding through parts. Checking the renders without loading every image:
 
-7. `python3 check3d.py templates.py chk.pdf` prints a short PASS/FAIL line per state; the full table goes to `check3d-table.txt` (`--full` prints it instead).
-8. `python3 pagediff.py OUTDIR` lists the preview PNGs that changed against `OUTDIR/../last-review/`. `last-review/` is not in git: in a fresh checkout, build the previous version's commit into OUTDIR first and run `python3 pagediff.py OUTDIR --accept`, then build the new version.
-9. Send only the CHANGED/NEW pages, with a one-line note on what changed, to the `render-reviewer` subagent (`.claude/agents/render-reviewer.md`). It checks for wrong overlaps, labels, balloons, both open/closed states and the footer version, and replies PASS/FAIL per page. Once it passes, run `python3 pagediff.py OUTDIR --accept`.
-10. Before a version goes to carlie or out for an order, have the subagent check all pages once.
+6. `python3 pagediff.py OUTDIR` lists the render preview PNGs that changed against `OUTDIR/../last-review/`. `last-review/` is not in git: in a fresh checkout, build the previous version's commit into OUTDIR first and run `python3 pagediff.py OUTDIR --accept`, then build the new version.
+7. Send only the CHANGED/NEW pages, with a one-line note on what changed, to the `render-reviewer` subagent (`.claude/agents/render-reviewer.md`). It checks for wrong overlaps, labels, balloons, and both open/closed states, and replies PASS/FAIL per page. Once it passes, run `python3 pagediff.py OUTDIR --accept`.
+8. Before a version goes to carlie or out for an order, have the subagent check all pages once.
