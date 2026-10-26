@@ -7,7 +7,7 @@ import manifold3d as m3d
 from shapely.geometry.polygon import orient
 import sleeves as SL
 
-src = open(sys.argv[1]).read().split("\ndef draw(")[0].replace("OUT = sys.argv[1]\nPNG = sys.argv[2]\n", "")
+src = open(sys.argv[1]).read()
 g = {}
 exec(src, g)
 os.makedirs(sys.argv[2], exist_ok=True)
