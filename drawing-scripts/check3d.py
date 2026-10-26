@@ -165,6 +165,7 @@ def page(res, pdf_name):
 
 if __name__ == "__main__":
     res = run()
+    bad = 0
     table = []
     for k, v in res.items():
         table.append("== %s" % (k,))
@@ -175,7 +176,6 @@ if __name__ == "__main__":
         print("\n".join(table))
     else:  # short summary for Claude; the full table goes to a file
         open("check3d-table.txt", "w").write("\n".join(table) + "\n")
-        bad = 0
         for (mode, st), v in res.items():
             free = [r for r in v if not r[3]]
             fails = [r for r in free if r[0] < MIN_GAP]
@@ -189,3 +189,4 @@ if __name__ == "__main__":
     pdf = [a for a in sys.argv[2:] if a.endswith(".pdf")]
     if pdf:
         page(res, pdf[0])
+    sys.exit(1 if bad else 0)
