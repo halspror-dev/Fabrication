@@ -4,8 +4,7 @@ import shapely
 from shapely.geometry import box
 from shapely import affinity
 
-src = open(sys.argv[1]).read().split("\ndef draw(")[0]
-src = src.replace("OUT = sys.argv[1]", "").replace("PNG = sys.argv[2]", "")
+src = open(sys.argv[1]).read()
 g = {}; exec(src, g)
 collar, keeper, frame, trigger = g["collar"], g["keeper"], g["frame"], g["trigger"]
 P, S = g["P"], g["S"]

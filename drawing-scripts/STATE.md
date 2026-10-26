@@ -5,7 +5,8 @@ One design version per thread. Start a fresh thread after two failed fixes of th
 
 - **Current version:** v0.95 (drawn, not yet printed). Files: `drawing-scripts/`, outputs in the project files
   under `v0.95/` (17-page PDF, 4 DXFs, 8 STLs in mm, zip). LOCKED until the 3D-print test (carlie, 2026-10-26):
-  no geometry, exporter or PDF changes.
+  no geometry or exporter changes. 2026-10-26: the 10 flat 2D pages were dropped at carlie's request (printing and
+  ordering cuts); `templates.py` now prints the checks, and renders, DXFs and STLs are unchanged.
 - **Rules from carlie:** every moving part gets an open and closed state, drawn and checked. No metal orders until a
   printed prototype works (2026-10-25). Design is private until the provisional patent is filed. Size the grip for
   the average man's hand (188 mm). Function first, then cost; fewer parts beats less metal.
