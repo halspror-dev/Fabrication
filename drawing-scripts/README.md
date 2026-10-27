@@ -4,7 +4,7 @@ These scripts need Python 3 plus `pip install shapely numpy scipy ezdxf manifold
 There are no 2D drawing pages or 1:1 cut templates any more: the sleeves are 3D printed and the plates are ordered cut from the DXFs.
 
 1. Run `python3 templates.py` to print every PASS/FAIL clearance check (keeper, trigger, tabs, pivot, sleeves, grip span, can positions). It ends with `ok` or `FAIL`.
-2. Run `python3 check3d.py templates.py` (needs scipy) for the real-shape 3D clearances: every pair of parts in the 3D model, in 5 states. It prints a short PASS/FAIL line per state; the full table goes to `check3d-table.txt` (`--full` prints it instead). Pairs that touch on purpose are listed in JOINT_PARTS/TOUCH at its top.
+2. Run `python3 check3d.py templates.py` (needs scipy) for the real-shape 3D clearances: every pair of parts in the 3D model, in 5 states. It prints a short PASS/FAIL line per state; the full table goes to `check3d-table.txt` (`--full` prints it instead). Pairs that touch on purpose are listed in JOINT_PARTS/TOUCH at its top. It exits 1 on any FAIL, and a Claude Code hook runs it before every `git push` and blocks the push on a FAIL.
 3. Run `python3 render3d.py templates.py iso.pdf` to make the 3D views, the tab and keeper close-ups and the exploded views. It loads the part geometry from templates.py.
 4. DXFs (the 4 laser-cut plates): `python3 make_dxf.py templates.py OUTDIR`.
 5. STLs for printing (the 2 sleeves, plus the 4 plates at real thickness for a plastic test build, in mm): `python3 make_stl.py templates.py OUTDIR`.

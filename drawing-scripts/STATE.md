@@ -21,6 +21,8 @@ One design version per thread. Start a fresh thread after two failed fixes of th
 - **Checks last run (2026-10-26):** `templates.py` 57 PASS, 0 FAIL. `check3d.py` PASS in all 5 states; closest free
   pair 0.047" can | collar (seat states), 0.060" handle plate | trigger (big hole). Render review: every page was
   looked at in the v0.95 thread before it went to carlie (2026-10-25); no render-reviewer pass yet.
+- **Tooling (2026-10-26):** 2D pages are gone (PR #7, merged); main rebuilds the same renders, STLs and DXF
+  geometry as before it. `check3d.py` now exits 1 on a FAIL, and a PreToolUse hook blocks any `git push` until it passes.
 - **Open issues:** none known in the drawings. The real test is the print: fit on real cans in both clip positions,
   trigger travel and up-stop, keeper lock, sleeve comfort.
 - **Next step:** wait for the P2S printer (planned 2026-10-27), print the v0.95 STLs, and test. Any change from the
