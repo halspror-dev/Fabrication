@@ -15,7 +15,7 @@ version without changing geometry (v0.95 is locked until the print test).
   spare.** That is under the 0.03 clearance `check3d.py` asks for; the drawn can has a 0.13 (3.3 mm) gap, so the
   model shows 0.047 where the real can gives about 0.012.
 - The old 1/8 (3.175 mm) metal collar is 0.60 mm too thick, which matches the v1 fit test.
-- The v0.7 coin test (two dimes, about 2.70 mm, fit) is thicker than this reading, so the lip may flex or the gap
-  may vary around the can. Readings at 3 spots would show which.
+- The v0.7 "two dimes" note was carlie's eyeball estimate (one dime held up looked like about half the gap), not a
+  fit test, so it does not conflict with this reading.
 - Printing: the slicer rounds 2.286 mm to whole layers. At 0.20 mm layers it should come out 2.2 mm (0.38 mm spare);
   2.4 mm would leave 0.18 mm. Check the height in the slicer preview.
