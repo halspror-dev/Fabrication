@@ -21,7 +21,8 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
 2. Ask carlie one short batch of plan-changing questions; save answers to project memory. **Done 2026-10-29.**
 3. Research, one thread per topic (P2S setup/calibration, dimensional accuracy, PETG data sheets and drying, slicer
    choice, design-for-print, measured strength tests, Bambu Studio workflow/CLI). Findings file with every claim
-   tagged sourced/inference; research cost recorded.
+   tagged sourced/inference; research cost recorded. Done so far: PETG (`research/petg.md`),
+   dimensional accuracy (`research/accuracy.md`).
 4. Design the calibration and test-coupon sequence (what each proves, expected number written before printing),
    baseline profiles and the print record format. Show carlie before printing.
 5. Calibrate, one batch per thread; record results, score predictions, commit profiles.
@@ -67,14 +68,21 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   PETG to ~30% tensile in 7 days of immersion (Kaptan 2025); no source tested printed PETG in mineral spirits, and
   sources conflict. Proposed a wipe/soak coupon test with carlie's own paint and thinner for the step 4 plan. No
   other material worth buying until that test fails.
+- 2026-10-29 (step 3, topic B: dimensional accuracy): findings in `research/accuracy.md`. Key points: calibrate flow
+  first, then elephant foot (P2S default 0.15 mm), shrinkage per filament, contour, then hole compensation (diameter
+  grows by twice the value); auto circle compensation does not support PETG Matte and Bambu Studio has no polyholes;
+  the collar slices to 2.20 mm at 0.20 mm layers, and Precise Z height should give 2.286 mm (check preview, then
+  measure); print Bambu's P2S air deflector for PETG-only prints. Caliper accuracy spec unverified (pages blocked).
 
 ## Next
-- Step 3: research, one thread per topic. PETG (settings, drying, storage, solvents) is done in `research/petg.md`.
-  Still to cover: first-power-on setup without the Bambu cloud (LAN-only mode), since nothing is bound yet.
+- Step 3: research, one thread per topic. Done: PETG (settings, drying, storage, solvents) in `research/petg.md`;
+  dimensional accuracy in `research/accuracy.md`. Still to cover: first-power-on setup without the Bambu cloud
+  (LAN-only mode), since nothing is bound yet.
 - Step 4 plan: include the solvent coupon test from `research/petg.md` section 5 (ask carlie which paint and
   thinner cans first) and a damp vs. dried stringing check on the first roll.
-- carlie: merge PR #13 (PETG research).
 - Fabrication's reply on fit tolerances arrives in `inbox/printing/`; fold it into step 4.
+- Step 4 coupon list from `research/accuracy.md`: elephant foot cube, X and Y shrink bars, hole/slot coupon at the
+  real feature sizes (made locally), collar Z coupon three ways. Settle the shrinkage-vs-holes conflict on the coupon.
 
 ## What failed
 - Nothing yet.
