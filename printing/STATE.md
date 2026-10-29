@@ -14,6 +14,8 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
 - `STATE.md`: this file (goal, done, next, what failed).
 - `profiles/`: exported slicer profiles, one file per profile, versioned by git. See `profiles/README.md`.
 - `tests/`: one record per print, calibration coupons included. See `tests/README.md` for the format.
+- `research/`: step 3 findings, one file per topic (claims tagged sourced/inference; raw evidence stays in
+  `/mnt/project-files/research/<topic>/`, not in git).
 
 ## Roadmap (carlie, 2026-10-29; each step is its own thread)
 1. Catch up and set up `printing/`. **Done 2026-10-29.**
@@ -60,8 +62,18 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   - **Handle sleeves in use:** mostly paint and aerosol runoff, sometimes paint thinner. PETG's resistance to
     paint thinner is unverified: research it in step 3 (maker data sheets first).
 
+- 2026-10-29 (step 3, design-for-print and measured-strength topics): `research/design-strength.md`. Key points:
+  our filament's own data sheet (Bambu PETG Matte TDS V1.0) gives Z/X-Y of 70 % tensile but only 31 % impact, so
+  orient every loaded part so the load runs along layers; walls beat infill for strength per gram; layers 0.2 mm or
+  less; fit holes print vertical and are fixed by slicer compensation from our own coupon, never by changing the
+  design; no AMS, so design and orient for no supports. No source above forum level gave PETG clearance numbers:
+  step 4 needs a fit coupon. ~95k tokens; 30 fetches (27 OK).
+
 ## Next
-- Step 3: research, one thread per topic. Add to the list: PETG resistance to paint thinner / solvents (sleeves),
+- Step 3: research, one thread per topic. Done: design-for-print + measured strength (`research/design-strength.md`).
+  Its asks for step 4: a PETG Matte fit coupon (vertical pin holes stepped across 0.1-0.35 mm undersize, tab slot,
+  one horizontal hole), a collar-thickness layer-height coupon, and an overhang coupon. The PETG Matte TDS says
+  "Not resistant to some organic solvents": feed that into the paint-thinner question. Add to the list: PETG resistance to paint thinner / solvents (sleeves),
   first-power-on setup without the Bambu cloud (LAN-only mode) since nothing is bound yet, and drying/storing 8 rolls.
 - Fabrication's reply on fit tolerances arrives in `inbox/printing/`; fold it into step 4.
 
