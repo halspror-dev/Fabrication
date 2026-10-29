@@ -73,6 +73,7 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   Still to cover: first-power-on setup without the Bambu cloud (LAN-only mode), since nothing is bound yet.
 - Step 4 plan: include the solvent coupon test from `research/petg.md` section 5 (ask carlie which paint and
   thinner cans first) and a damp vs. dried stringing check on the first roll.
+- carlie: merge PR #13 (PETG research).
 - Fabrication's reply on fit tolerances arrives in `inbox/printing/`; fold it into step 4.
 
 ## What failed
