@@ -181,12 +181,10 @@ v0.95 uses a clevis pin and hitch clip, not threads, so this is for later design
 ## What step 4 should test (proposals, not results)
 
 1. A fit coupon in PETG Matte: vertical holes at the drawn pin size and steps across 0 to +0.35 mm, a slot at the tab
-   size, a
-   horizontal hole for comparison. Measure, then set hole/contour compensation.
+   size, a horizontal hole for comparison. Measure, then set hole/contour compensation.
 2. A layer-height check: a coupon at the collar thickness sliced at 0.2/0.16/0.12 mm, measured.
 3. Optional strength check for the sleeves: two identical bars, one flat, one standing, snapped by hand or with a
    hanging weight, to confirm the TDS anisotropy on our printer.
-
 4. An overhang coupon in PETG Matte (30-70° from the bed) to settle which overhang limit applies to us.
 
 ## Source log and cost
