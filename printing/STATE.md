@@ -15,6 +15,8 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
 - `research/`: step 3 findings files, one per topic, every claim tagged sourced/inference.
 - `profiles/`: exported slicer profiles, one file per profile, versioned by git. See `profiles/README.md`.
 - `tests/`: one record per print, calibration coupons included. See `tests/README.md` for the format.
+- `research/`: step 3 findings, one file per topic (claims tagged sourced/inference; raw evidence stays in
+  `/mnt/project-files/research/<topic>/`, not in git).
 
 ## Roadmap (carlie, 2026-10-29; each step is its own thread)
 1. Catch up and set up `printing/`. **Done 2026-10-29.**
@@ -67,6 +69,13 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   PETG to ~30% tensile in 7 days of immersion (Kaptan 2025); no source tested printed PETG in mineral spirits, and
   sources conflict. Proposed a wipe/soak coupon test with carlie's own paint and thinner for the step 4 plan. No
   other material worth buying until that test fails.
+
+- 2026-10-29 (step 3, design-for-print and measured-strength topics): `research/design-strength.md`. Key points:
+  our filament's own data sheet (Bambu PETG Matte TDS V1.0) gives Z/X-Y of 70 % tensile but only 31 % impact, so
+  orient every loaded part so the load runs along layers; walls beat infill for strength per gram; layers 0.2 mm or
+  less; fit holes print vertical and are fixed by slicer compensation from our own coupon, never by changing the
+  design; no AMS, so design and orient for no supports. No source above forum level gave PETG clearance numbers:
+  step 4 needs a fit coupon. ~95k tokens; 30 fetches (27 OK).
 
 ## Next
 - Step 3: research, one thread per topic. PETG (settings, drying, storage, solvents) is done in `research/petg.md`.
