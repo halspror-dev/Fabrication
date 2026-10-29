@@ -60,9 +60,22 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   - **Handle sleeves in use:** mostly paint and aerosol runoff, sometimes paint thinner. PETG's resistance to
     paint thinner is unverified: research it in step 3 (maker data sheets first).
 
+- 2026-10-29 (step 3, topic A: setup, slicer, workflow, LAN-only): findings in `research/setup-slicer.md`.
+  - **Slicer: Bambu Studio** (only slicer Bambu authorizes to print to a LAN-only P2S without Developer Mode; runs
+    the P2S auto flow dynamics; same P2S/PETG Matte profiles as OrcaSlicer; has a CLI and preset bundles). OrcaSlicer
+    only as an offline calibration-model generator over USB if Studio lacks a test we need.
+  - **Privacy:** LAN Only on, Developer Mode off, no cloud printing (cloud keeps G-code, i.e. geometry, on Bambu's
+    servers), no Studio login if it works without one. Open: whether the P2S forces a one-time account login before
+    LAN Only; carlie decides at the printer.
+  - **P2S automates:** bed leveling, vibration compensation (input shaping), motor noise cancellation, clumping and
+    camera calibration, flow dynamics (eddy sensor). **We do:** flow rate (manual coarse then fine), XY hole/contour
+    compensation, first-layer check; firmware updates offline by USB.
+
 ## Next
-- Step 3: research, one thread per topic. Add to the list: PETG resistance to paint thinner / solvents (sleeves),
-  first-power-on setup without the Bambu cloud (LAN-only mode) since nothing is bound yet, and drying/storing 8 rolls.
+- Step 3: remaining research threads (accuracy, PETG/materials, design-for-print/strength). Topic A done.
+  Still to cover there: PETG resistance to paint thinner / solvents (sleeves) and drying/storing 8 rolls.
+- Step 4 must decide: whether Studio's Calibration tab on BigGuy has temp / max-volumetric / hole-tolerance tests
+  for the P2S (else OrcaSlicer offline via USB), and the first-power-on steps in `research/setup-slicer.md` section 5.
 - Fabrication's reply on fit tolerances arrives in `inbox/printing/`; fold it into step 4.
 
 ## What failed
