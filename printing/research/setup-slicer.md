@@ -10,7 +10,8 @@ Evidence (raw pages, text, fetch log) is in `/mnt/project-files/research/printin
 ## Recommendation in short
 
 1. **Slicer: Bambu Studio** (v02.08.04.57 for Windows on the [download page](https://bambulab.com/en/download/studio) today **[S]**), with OrcaSlicer kept only as an
-   optional, offline generator of extra calibration models if Studio lacks one we need. Reasons below. **[I]** built
+   offline second slicer (files by USB drive, no network) for extra calibration models and, if a measured hole
+   coupon says so, for the fit-critical parts (polyholes, precise wall). Reasons below. **[I]** built
    on [S] facts.
 2. **Network: LAN Only mode on the printer, Developer Mode off, never cloud printing, never MakerWorld upload.**
    Cloud printing stores the sliced G-code on Bambu's servers, and G-code is the part geometry, so it would break the
@@ -94,6 +95,7 @@ After any firmware change, redo motor noise-cancellation calibration (firmware h
 | Extra calibration models | Temp tower, max flowrate, retraction, VFA, PA tower documented for *third-party* printers with Studio's developer mode on ([Calibration for 3rd party](https://wiki.bambulab.com/en/bambu-studio/Calibration)) **[S]**; whether they appear for a P2S is unverified **[I]** | Built in: temperature, max volumetric speed, PA, flow ratio, retraction, tolerance test (hex holes at 0-0.4 mm) and more ([guide](https://www.orcaslicer.com/wiki/guides/calibration_guide.html), [tolerance](https://www.orcaslicer.com/wiki/calibration/tolerance_calib.html)) **[S]** |
 | Headless CLI | Yes ([Command-Line-Usage](https://raw.githubusercontent.com/wiki/bambulab/BambuStudio/Command-Line-Usage.md)) **[S]** | Yes, more documented ([CLI mode](https://www.orcaslicer.com/wiki/cli/cli_mode.html)) **[S]** |
 | Preset export | Export Preset Bundle: `.bbscfg` (printer + its filament/process presets), `.bbsflmt` (filament) ([export presets](https://wiki.bambulab.com/en/bambu-studio/export-filament)) **[S]** | Export/Import Preset Bundle ([import/export](https://www.orcaslicer.com/wiki/general_settings/import_export.html)) **[S]** |
+| Accuracy features (from the accuracy thread, re-checked here) | Precise Z height: yes, Advanced mode ([layer height](https://wiki.bambulab.com/en/software/bambu-studio/layer-height); `precise_z_height`, `comAdvanced` in [PrintConfig.cpp](https://raw.githubusercontent.com/bambulab/BambuStudio/master/src/libslic3r/PrintConfig.cpp)) **[S]**. Precise wall: exists but hidden in develop mode (`precise_outer_wall`, `comDevelop`) **[S]**. Polyholes: none (no match in PrintConfig.cpp) **[S]**. Auto hole compensation doesn't cover PETG Matte (accuracy thread, Fabrication PR #16) | Precise Z height, Precise wall and Polyholes are all normal settings ([precision](https://www.orcaslicer.com/wiki/print_settings/quality/quality_settings_precision.html), [README](https://raw.githubusercontent.com/OrcaSlicer/OrcaSlicer/main/README.md)) **[S]** |
 | License / network code | Bambu's official slicer | AGPL-3.0; the Bambu networking plugin is "based on non-free libraries from BambuLab" and optional ([README](https://raw.githubusercontent.com/OrcaSlicer/OrcaSlicer/main/README.md)) **[S]** |
 
 **Why Bambu Studio** **[I]**:
@@ -105,13 +107,24 @@ After any firmware change, redo motor noise-cancellation calibration (firmware h
 - The P2S profiles are the same in both, so Orca gives no better starting point for this printer and filament.
 - Its CLI and preset bundles are enough for versioned, reproducible profiles.
 
-**Where OrcaSlicer still helps** **[I]**: its tolerance test and temperature / max volumetric speed models are
-well documented. If Studio's Calibration tab on BigGuy doesn't offer an equivalent for the P2S, install Orca offline,
-generate the coupon, and send it by USB drive (no network, no Developer Mode). Decide in step 4 after checking Studio.
+**Where OrcaSlicer still helps** **[I]**: accuracy. Polyholes and an exposed Precise wall are real advantages for
+the fit-critical holes and slots, and its tolerance and temperature / max volumetric speed tests are well documented.
+Precise Z height is *not* a difference: Studio has it too (Advanced mode), so the collar thickness can be handled in
+either. Auto hole compensation doesn't help in either, because it doesn't cover PETG Matte, so holes get manual
+XY hole compensation from our own coupon whichever slicer slices them.
+
+**So the plan is Studio first, with a measured tie-break** **[I]**: in step 4/5, print the hole/slot coupon twice:
+once sliced in Studio (manual XY hole compensation), once in OrcaSlicer (polyholes + precise wall), with the Orca
+copy sent **by USB drive** (no network link, no Developer Mode, no Bambu Connect). If the Orca coupon measures
+clearly closer to the drawn sizes, slice the fit-critical stand-ins in Orca and print them from USB, and keep Studio
+for calibration and everything else. Studio's own Develop mode may also expose Precise wall; check it on BigGuy.
+Whether Orca's `.gcode.3mf` files print from a USB drive on the P2S is not confirmed by a page we read (a Reddit
+thread title, ["Is it possible to get OrcaSlicer files to show a gcode thumbnail on a P2S screen?"](https://www.reddit.com/r/BambuLab/comments/1tgs0t9/is_it_possible_to_get_orcaslicer_files_to_show_a/),
+suggests people do it) **[F]**; test with the first coupon.
 
 **What would change the call** **[I]**: Studio failing to bind or keep the LAN-only printer (forum reports of Studio
 losing LAN printers were X1C/X1E, not P2S; [forum](https://forum.bambulab.com/t/bambu-studio-losing-printers-when-switched-to-lan-only-mode/206035) **[F]**),
-or a calibration we need that only Orca has.
+a calibration we need that only Orca has, or the hole coupon above measuring clearly better from Orca.
 
 Other slicers (PrusaSlicer, Cura) were not researched: neither ships Bambu's P2S profiles we could check, and neither
 can send to an authorization-firmware printer without the same Connect/Developer Mode workarounds. **[I]**
@@ -210,7 +223,7 @@ can send to an authorization-firmware printer without the same Connect/Developer
 
 ## Research cost
 
-- Fetches: 59 logged, 54 OK, 5 FAILED (github.com x1, api.github.com x2, one Orca 404, one Reddit 429). Two more
+- Fetches: 61 logged, 56 OK, 5 FAILED (github.com x1, api.github.com x2, one Orca 404, one Reddit 429). Two more
   Reddit comment feeds were queued and cancelled after repeated 429s. Plus 7 web searches, used only to find URLs
   (nothing is cited from a search snippet).
 - Model usage: about 180k tokens for the thread, from the session counter (an estimate), one thread, no subagents,

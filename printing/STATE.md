@@ -62,8 +62,10 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
 
 - 2026-10-29 (step 3, topic A: setup, slicer, workflow, LAN-only): findings in `research/setup-slicer.md`.
   - **Slicer: Bambu Studio** (only slicer Bambu authorizes to print to a LAN-only P2S without Developer Mode; runs
-    the P2S auto flow dynamics; same P2S/PETG Matte profiles as OrcaSlicer; has a CLI and preset bundles). OrcaSlicer
-    only as an offline calibration-model generator over USB if Studio lacks a test we need.
+    the P2S auto flow dynamics; same P2S/PETG Matte profiles as OrcaSlicer; has a CLI and preset bundles; has Precise Z
+    height). OrcaSlicer as an offline second slicer, files by USB drive: Orca has polyholes and an exposed precise
+    wall, Studio doesn't, so steps 4/5 print the hole/slot coupon from both and let the calipers decide which slices
+    the fit-critical parts.
   - **Privacy:** LAN Only on, Developer Mode off, no cloud printing (cloud keeps G-code, i.e. geometry, on Bambu's
     servers), no Studio login if it works without one. Open: whether the P2S forces a one-time account login before
     LAN Only; carlie decides at the printer.
