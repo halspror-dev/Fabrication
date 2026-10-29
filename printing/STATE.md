@@ -17,7 +17,7 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
 
 ## Roadmap (carlie, 2026-10-29; each step is its own thread)
 1. Catch up and set up `printing/`. **Done 2026-10-29.**
-2. Ask carlie one short batch of plan-changing questions; save answers to project memory.
+2. Ask carlie one short batch of plan-changing questions; save answers to project memory. **Done 2026-10-29.**
 3. Research, one thread per topic (P2S setup/calibration, dimensional accuracy, PETG data sheets and drying, slicer
    choice, design-for-print, measured strength tests, Bambu Studio workflow/CLI). Findings file with every claim
    tagged sourced/inference; research cost recorded.
@@ -42,9 +42,28 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
     `graphify-out/graph.json`, so plain grep was used. `halspror-dev/print-lab` is an empty repo, unused so far.
   - Nothing printed yet; slicer not chosen.
 
+- 2026-10-29 (step 2): carlie's answers (thread "Answer setup questions for print plan"):
+  - **Printed so far:** nothing. The P2S is still boxed (on the porch); no auto-calibration run yet.
+  - **Fit accuracy:** carlie left it to our judgement and asked us to ask Fabrication. Sent as project-notes
+    `inbox/fabrication/2026-10-29-printing-fit-tolerances.md`; Fabrication's answer sets the targets in step 4.
+    Until then the working target (inference, to be checked in step 3 research and step 5 calibration) is: printed
+    size within about 0.1 mm on the fit-critical features (collar thickness, pin and clip holes, tab and keeper slots),
+    looser on plate outlines.
+  - **Measuring:** 6 inch digital calipers, large display, about $25 (carlie named them Seiko).
+    `drawing-scripts/MEASUREMENTS.md` says the can was measured with a NEIKO caliper: confirm which is used and record
+    the caliper in every test record. No pin or feeler gauges mentioned.
+  - **Filament:** Bambu Lab matte PETG, 8 rolls. PETG only until it proves wrong for a part, so we learn one material.
+    No dryer mentioned: drying and storage are part of the step 3 PETG research.
+  - **Hardware:** stock (nozzle and plate as shipped).
+  - **Software:** nothing installed on BigGuy yet; the printer is not bound to any account yet. So the slicer choice
+    and LAN-only / no-cloud setup can be decided before first power-on (step 3 slicer research, step 4 plan).
+  - **Handle sleeves in use:** mostly paint and aerosol runoff, sometimes paint thinner. PETG's resistance to
+    paint thinner is unverified: research it in step 3 (maker data sheets first).
+
 ## Next
-- Step 2: ask carlie the questions that change the plan (what has been printed or failed so far, how accurate the
-  test fits must be in mm, other filament coming, which filament brand/colour, slicer already installed on BigGuy?).
+- Step 3: research, one thread per topic. Add to the list: PETG resistance to paint thinner / solvents (sleeves),
+  first-power-on setup without the Bambu cloud (LAN-only mode) since nothing is bound yet, and drying/storing 8 rolls.
+- Fabrication's reply on fit tolerances arrives in `inbox/printing/`; fold it into step 4.
 
 ## What failed
 - Nothing yet.
