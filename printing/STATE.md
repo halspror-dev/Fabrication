@@ -15,6 +15,8 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
 - `research/`: step 3 findings files, one per topic, every claim tagged sourced/inference.
 - `profiles/`: exported slicer profiles, one file per profile, versioned by git. See `profiles/README.md`.
 - `tests/`: one record per print, calibration coupons included. See `tests/README.md` for the format.
+- `research/`: step 3 findings, one file per topic (claims tagged sourced/inference; raw evidence stays in
+  `/mnt/project-files/research/<topic>/`, not in git).
 
 ## Roadmap (carlie, 2026-10-29; each step is its own thread)
 1. Catch up and set up `printing/`. **Done 2026-10-29.**
@@ -61,6 +63,12 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   - **Handle sleeves in use:** mostly paint and aerosol runoff, sometimes paint thinner. PETG's resistance to
     paint thinner is unverified: research it in step 3 (maker data sheets first).
 
+- 2026-10-29 (step 3, design-for-print and measured-strength topics): `research/design-strength.md`. Key points:
+  our filament's own data sheet (Bambu PETG Matte TDS V1.0) gives Z/X-Y of 70 % tensile but only 31 % impact, so
+  orient every loaded part so the load runs along layers; walls beat infill for strength per gram; layers 0.2 mm or
+  less; fit holes print vertical and are fixed by slicer compensation from our own coupon, never by changing the
+  design; no AMS, so design and orient for no supports. No source above forum level gave PETG clearance numbers:
+  step 4 needs a fit coupon. ~95k tokens; 30 fetches (27 OK).
 - 2026-10-29 (step 3, topic C, PETG): `research/petg.md`. PETG Matte TDS settings (nozzle 230-260 C, bed 65-75 C,
   glue recommended, Z tensile 30.1 vs X-Y 42.9 MPa, HDT ~71 C). Dry one roll at a time on the P2S bed, 80 C for
   12 h, box as cover; store opened rolls under 20% RH with desiccant and a hygrometer. Solvents: acetone cut printed
@@ -69,11 +77,14 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   other material worth buying until that test fails.
 
 ## Next
-- Step 3: research, one thread per topic. PETG (settings, drying, storage, solvents) is done in `research/petg.md`.
-  Still to cover: first-power-on setup without the Bambu cloud (LAN-only mode), since nothing is bound yet.
+- Step 3: research, one thread per topic. Done: PETG (settings, drying, storage, solvents) in `research/petg.md`;
+  design-for-print + measured strength in `research/design-strength.md`. Still to cover: first-power-on setup
+  without the Bambu cloud (LAN-only mode), since nothing is bound yet.
 - Step 4 plan: include the solvent coupon test from `research/petg.md` section 5 (ask carlie which paint and
-  thinner cans first) and a damp vs. dried stringing check on the first roll.
-- carlie: merge PR #13 (PETG research).
+  thinner cans first), a damp vs. dried stringing check on the first roll, and from `research/design-strength.md`
+  a PETG Matte fit coupon (vertical pin holes stepped across 0.1-0.35 mm undersize, tab slot, one horizontal hole),
+  a collar-thickness layer-height coupon, and an overhang coupon.
+- carlie: merge PR #14 (design-for-print and strength research).
 - Fabrication's reply on fit tolerances arrives in `inbox/printing/`; fold it into step 4.
 
 ## What failed
