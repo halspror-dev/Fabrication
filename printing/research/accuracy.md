@@ -63,8 +63,9 @@ Notes on the Bambu Studio settings:
 - XY hole compensation only works on closed paths; layers where a hole opens to the side are not compensated and
   can show layer separation [S1]. Open-sided notches get only contour compensation [S1].
 - Hole compensation is one number for every hole; users report small holes tighter and big ones looser with one
-  setting [S16]. If our pin holes and slots need different values, use a per-object or per-part modifier or ask
-  Fabrication to size them in CAD [I].
+  setting [S16]. If our pin holes and slots need different values, use per-object values or ask Fabrication to size
+  them in CAD [I]. (Step 6 correction: hole and contour compensation are object settings in Bambu Studio's source,
+  so a per-part modifier can't set them; see `review/v0.95-stl-review.md` §6.)
 
 ## Layer height and the collar (Z)
 

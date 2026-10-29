@@ -18,6 +18,8 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
 - `profiles/`: exported slicer profiles, one file per profile, versioned by git. See `profiles/README.md`.
 - `tests/`: one record per print, calibration coupons included. See `tests/README.md` for the format; prediction
   scores in `tests/SCORES.md`.
+- `review/`: reviews of Fabrication's print files (step 6: `review/v0.95-stl-review.md`).
+- `tools/`: local scripts (`tools/stl_review.py`: mesh checks on the STLs, nothing uploaded).
 
 ## Roadmap (carlie, 2026-10-29; each step is its own thread)
 1. Catch up and set up `printing/`. **Done 2026-10-29.**
@@ -29,7 +31,7 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
 4. Design the calibration and test-coupon sequence (what each proves, expected number written before printing),
    baseline profiles and the print record format. Show carlie before printing. **Done 2026-10-29: `PLAN.md`.**
 5. Calibrate, one batch per thread; record results, score predictions, commit profiles.
-6. Review the 8 v0.95 STLs locally (trimesh, nothing uploaded); findings to Fabrication's inbox.
+6. Review the 8 v0.95 STLs locally (trimesh, nothing uploaded); findings to Fabrication's inbox. **Done 2026-10-29.**
 7. Print the v0.95 test set with tuned profiles; fit/function results to Fabrication's inbox.
 8. Report.
 
@@ -107,11 +109,24 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   `archive/printing/2026-10-29-fabrication-fit-tolerances.md`). Step 3 research PRs #13-#16 were merged
   into this branch with their `STATE.md` conflicts resolved.
 
+- 2026-10-29 (step 6): `review/v0.95-stl-review.md`. All 8 STLs clean (watertight, one body, no supports, right
+  orientation; collar 2.20 / plates 3.20 / shims 0.80 at 0.20 layers). Ranked risks: (1) collar tab slots have
+  0.05 mm play on a 3.20 printed tab; (2) frame pivot-lobe neck opens ~0.26 mm per +0.1 hole compensation, so cap the
+  frame at +0.15/side and drill tight pin holes; (3) grip sleeve bottom end cap thins to 0.52 mm (design, sent to
+  Fabrication); (4) sleeve slots are open notches, so no hole compensation and elephant foot closes the mouth;
+  (5) sleeve screw holes are horizontal, drill #7 after fitting; (6) hole compensation is one value per object in
+  Bambu Studio (`PrintObjectConfig`), not per modifier, which corrects `research/accuracy.md`; (7) grip pocket 0.076
+  mm/side; (8) plate warping; (9) shim bores. Design suggestions went to project-notes
+  `inbox/fabrication/2026-10-29-printing-v0.95-stl-review.md`. The review proposes C4 (lobed hole), new C4b (open
+  sleeve slot) and a T9 tab-in-slot check for batch 2; not yet written into `PLAN.md`.
+
 ## Next
 - Step 5, batch 0 of `PLAN.md`, in a fresh thread, when carlie unboxes the printer. That thread also writes
   `coupons/make_coupons.py` and runs it on BigGuy.
 - Before batch 3: carlie names the spray paint and thinner cans used near the sleeves (read their SDS first).
-- Step 6 (STL review) needs no printer and can run any time.
+- Batch 2 thread: adopt the review's plan additions (C4 lobed hole, C4b, T9 printed tab in slot) into `PLAN.md`
+  before printing C4, and cap the frame's hole compensation at +0.15 per side.
+- Step 7 records: keyhole sizes, grip-sleeve end cap in the preview, how far each sleeve sits proud, holes drilled.
 
 ## What failed
 - Nothing yet.
