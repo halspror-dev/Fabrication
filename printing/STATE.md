@@ -12,6 +12,7 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
 
 ## Layout
 - `STATE.md`: this file (goal, done, next, what failed).
+- `research/`: step 3 findings files, one per topic, every claim tagged sourced/inference.
 - `profiles/`: exported slicer profiles, one file per profile, versioned by git. See `profiles/README.md`.
 - `tests/`: one record per print, calibration coupons included. See `tests/README.md` for the format.
 
@@ -60,9 +61,19 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   - **Handle sleeves in use:** mostly paint and aerosol runoff, sometimes paint thinner. PETG's resistance to
     paint thinner is unverified: research it in step 3 (maker data sheets first).
 
+- 2026-10-29 (step 3, topic C, PETG): `research/petg.md`. PETG Matte TDS settings (nozzle 230-260 C, bed 65-75 C,
+  glue recommended, Z tensile 30.1 vs X-Y 42.9 MPa, HDT ~71 C). Dry one roll at a time on the P2S bed, 80 C for
+  12 h, box as cover; store opened rolls under 20% RH with desiccant and a hygrometer. Solvents: acetone cut printed
+  PETG to ~30% tensile in 7 days of immersion (Kaptan 2025); no source tested printed PETG in mineral spirits, and
+  sources conflict. Proposed a wipe/soak coupon test with carlie's own paint and thinner for the step 4 plan. No
+  other material worth buying until that test fails.
+
 ## Next
-- Step 3: research, one thread per topic. Add to the list: PETG resistance to paint thinner / solvents (sleeves),
-  first-power-on setup without the Bambu cloud (LAN-only mode) since nothing is bound yet, and drying/storing 8 rolls.
+- Step 3: research, one thread per topic. PETG (settings, drying, storage, solvents) is done in `research/petg.md`.
+  Still to cover: first-power-on setup without the Bambu cloud (LAN-only mode), since nothing is bound yet.
+- Step 4 plan: include the solvent coupon test from `research/petg.md` section 5 (ask carlie which paint and
+  thinner cans first) and a damp vs. dried stringing check on the first roll.
+- carlie: merge PR #13 (PETG research).
 - Fabrication's reply on fit tolerances arrives in `inbox/printing/`; fold it into step 4.
 
 ## What failed
