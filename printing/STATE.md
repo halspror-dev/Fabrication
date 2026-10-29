@@ -68,12 +68,27 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   sources conflict. Proposed a wipe/soak coupon test with carlie's own paint and thinner for the step 4 plan. No
   other material worth buying until that test fails.
 
+- 2026-10-29 (step 3, topic A: setup, slicer, workflow, LAN-only): findings in `research/setup-slicer.md`.
+  - **Slicer: Bambu Studio** (only slicer Bambu authorizes to print to a LAN-only P2S without Developer Mode; runs
+    the P2S auto flow dynamics; same P2S/PETG Matte profiles as OrcaSlicer; has a CLI and preset bundles; has Precise Z
+    height). OrcaSlicer as an offline second slicer, files by USB drive: Orca has polyholes and an exposed precise
+    wall, Studio doesn't, so steps 4/5 print the hole/slot coupon from both and let the calipers decide which slices
+    the fit-critical parts.
+  - **Privacy:** LAN Only on, Developer Mode off, no cloud printing (cloud keeps G-code, i.e. geometry, on Bambu's
+    servers), no Studio login if it works without one. Open: whether the P2S forces a one-time account login before
+    LAN Only; carlie decides at the printer.
+  - **P2S automates:** bed leveling, vibration compensation (input shaping), motor noise cancellation, clumping and
+    camera calibration, flow dynamics (eddy sensor). **We do:** flow rate (manual coarse then fine), XY hole/contour
+    compensation, first-layer check; firmware updates offline by USB.
+
 ## Next
-- Step 3: research, one thread per topic. PETG (settings, drying, storage, solvents) is done in `research/petg.md`.
-  Still to cover: first-power-on setup without the Bambu cloud (LAN-only mode), since nothing is bound yet.
+- Step 3: other research topics (accuracy, design-for-print/strength) run in their own threads; PETG and setup/slicer
+  are done.
 - Step 4 plan: include the solvent coupon test from `research/petg.md` section 5 (ask carlie which paint and
   thinner cans first) and a damp vs. dried stringing check on the first roll.
-- carlie: merge PR #13 (PETG research).
+- Step 4 must also decide: whether Studio's Calibration tab on BigGuy has temp / max-volumetric / hole-tolerance
+  tests for the P2S (else OrcaSlicer offline via USB), and the first-power-on steps in `research/setup-slicer.md`
+  section 5.
 - Fabrication's reply on fit tolerances arrives in `inbox/printing/`; fold it into step 4.
 
 ## What failed
