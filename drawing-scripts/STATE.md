@@ -23,6 +23,8 @@ One design version per thread. Start a fresh thread after two failed fixes of th
   looked at in the v0.95 thread before it went to carlie (2026-10-25); no render-reviewer pass yet.
 - **Tooling (2026-10-26):** 2D pages are gone (PR #7, merged); main rebuilds the same renders, STLs and DXF
   geometry as before it. `check3d.py` now exits 1 on a FAIL, and a PreToolUse hook blocks any `git push` until it passes.
+- **Can measurements (2026-10-27):** logged in `MEASUREMENTS.md`. Rust-Oleum lip gap 2.58 mm: the 0.090 collar fits
+  with 0.29 mm (0.012") to spare, tighter than the drawn can (0.047"). No geometry change; carlie decides after the print test.
 - **Open issues:** none known in the drawings. The real test is the print: fit on real cans in both clip positions,
   trigger travel and up-stop, keeper lock, sleeve comfort.
 - **Next step:** wait for the P2S printer (planned 2026-10-27), print the v0.95 STLs, and test. Any change from the
