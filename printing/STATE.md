@@ -77,6 +77,19 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   design; no AMS, so design and orient for no supports. No source above forum level gave PETG clearance numbers:
   step 4 needs a fit coupon. ~95k tokens; 30 fetches (27 OK).
 
+- 2026-10-29 (step 3, topic A: setup, slicer, workflow, LAN-only): findings in `research/setup-slicer.md`.
+  - **Slicer: Bambu Studio** (only slicer Bambu authorizes to print to a LAN-only P2S without Developer Mode; runs
+    the P2S auto flow dynamics; same P2S/PETG Matte profiles as OrcaSlicer; has a CLI and preset bundles; has Precise Z
+    height). OrcaSlicer as an offline second slicer, files by USB drive: Orca has polyholes and an exposed precise
+    wall, Studio doesn't, so steps 4/5 print the hole/slot coupon from both and let the calipers decide which slices
+    the fit-critical parts.
+  - **Privacy:** LAN Only on, Developer Mode off, no cloud printing (cloud keeps G-code, i.e. geometry, on Bambu's
+    servers), no Studio login if it works without one. Open: whether the P2S forces a one-time account login before
+    LAN Only; carlie decides at the printer.
+  - **P2S automates:** bed leveling, vibration compensation (input shaping), motor noise cancellation, clumping and
+    camera calibration, flow dynamics (eddy sensor). **We do:** flow rate (manual coarse then fine), XY hole/contour
+    compensation, first-layer check; firmware updates offline by USB.
+
 ## Next
 - Step 3: research, one thread per topic. PETG (settings, drying, storage, solvents) is done in `research/petg.md`.
   Still to cover: first-power-on setup without the Bambu cloud (LAN-only mode), since nothing is bound yet.
