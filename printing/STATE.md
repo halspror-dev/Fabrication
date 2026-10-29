@@ -13,6 +13,7 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
 ## Layout
 - `STATE.md`: this file (goal, done, next, what failed).
 - `profiles/`: exported slicer profiles, one file per profile, versioned by git. See `profiles/README.md`.
+- `research/`: step 3 findings, one file per topic, every claim tagged sourced/inference.
 - `tests/`: one record per print, calibration coupons included. See `tests/README.md` for the format.
 
 ## Roadmap (carlie, 2026-10-29; each step is its own thread)
@@ -20,7 +21,7 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
 2. Ask carlie one short batch of plan-changing questions; save answers to project memory. **Done 2026-10-29.**
 3. Research, one thread per topic (P2S setup/calibration, dimensional accuracy, PETG data sheets and drying, slicer
    choice, design-for-print, measured strength tests, Bambu Studio workflow/CLI). Findings file with every claim
-   tagged sourced/inference; research cost recorded.
+   tagged sourced/inference; research cost recorded. Done so far: dimensional accuracy (`research/accuracy.md`).
 4. Design the calibration and test-coupon sequence (what each proves, expected number written before printing),
    baseline profiles and the print record format. Show carlie before printing.
 5. Calibrate, one batch per thread; record results, score predictions, commit profiles.
@@ -60,10 +61,19 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   - **Handle sleeves in use:** mostly paint and aerosol runoff, sometimes paint thinner. PETG's resistance to
     paint thinner is unverified: research it in step 3 (maker data sheets first).
 
+- 2026-10-29 (step 3, topic B: dimensional accuracy): findings in `research/accuracy.md`. Key points: calibrate flow
+  first, then elephant foot (P2S default 0.15 mm), shrinkage per filament, contour, then hole compensation (diameter
+  grows by twice the value); auto circle compensation does not support PETG Matte and Bambu Studio has no polyholes;
+  the collar slices to 2.20 mm at 0.20 mm layers, and Precise Z height should give 2.286 mm (check preview, then
+  measure); print Bambu's P2S air deflector for PETG-only prints. Caliper accuracy spec unverified (pages blocked).
+
 ## Next
-- Step 3: research, one thread per topic. Add to the list: PETG resistance to paint thinner / solvents (sleeves),
-  first-power-on setup without the Bambu cloud (LAN-only mode) since nothing is bound yet, and drying/storing 8 rolls.
+- Step 3: research, one thread per topic. Topic B (dimensional accuracy) done. Add to the list: PETG resistance
+  to paint thinner / solvents (sleeves), first-power-on setup without the Bambu cloud (LAN-only mode) since
+  nothing is bound yet, and drying/storing 8 rolls.
 - Fabrication's reply on fit tolerances arrives in `inbox/printing/`; fold it into step 4.
+- Step 4 coupon list from `research/accuracy.md`: elephant foot cube, X and Y shrink bars, hole/slot coupon at the
+  real feature sizes (made locally), collar Z coupon three ways. Settle the shrinkage-vs-holes conflict on the coupon.
 
 ## What failed
 - Nothing yet.
