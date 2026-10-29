@@ -14,7 +14,6 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
 - `STATE.md`: this file (goal, done, next, what failed).
 - `research/`: step 3 findings files, one per topic, every claim tagged sourced/inference.
 - `profiles/`: exported slicer profiles, one file per profile, versioned by git. See `profiles/README.md`.
-- `research/`: step 3 findings, one file per topic, every claim tagged sourced/inference.
 - `tests/`: one record per print, calibration coupons included. See `tests/README.md` for the format.
 
 ## Roadmap (carlie, 2026-10-29; each step is its own thread)
