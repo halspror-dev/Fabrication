@@ -12,13 +12,12 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
 
 ## Layout
 - `STATE.md`: this file (goal, done, next, what failed).
-- `research/`: step 3 findings files, one per topic, every claim tagged sourced/inference.
-- `profiles/`: exported slicer profiles, one file per profile, versioned by git. See `profiles/README.md`.
 - `PLAN.md`: the calibration and test plan (step 4): batches, predictions, coupons, baseline profiles.
-- `research/`: step 3 findings, one file per topic, every claim tagged sourced/inference.
-- `tests/`: one record per print, calibration coupons included. See `tests/README.md` for the format.
 - `research/`: step 3 findings, one file per topic (claims tagged sourced/inference; raw evidence stays in
   `/mnt/project-files/research/<topic>/`, not in git).
+- `profiles/`: exported slicer profiles, one file per profile, versioned by git. See `profiles/README.md`.
+- `tests/`: one record per print, calibration coupons included. See `tests/README.md` for the format; prediction
+  scores in `tests/SCORES.md`.
 
 ## Roadmap (carlie, 2026-10-29; each step is its own thread)
 1. Catch up and set up `printing/`. **Done 2026-10-29.**
@@ -105,7 +104,7 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   Z coupon (collar 2.20 at 0.20, Precise Z off); 3 overhang, strength bars, solvent coupons; 4 validation reprint via
   the Studio CLI. Every test has its prediction and pass band written before printing; scores go in
   `tests/SCORES.md`. Fit bands come from Fabrication's reply (project-notes
-  `inbox/printing/2026-10-29-fabrication-fit-tolerances.md`, now archived). Step 3 research PRs #13-#16 were merged
+  `archive/printing/2026-10-29-fabrication-fit-tolerances.md`). Step 3 research PRs #13-#16 were merged
   into this branch with their `STATE.md` conflicts resolved.
 
 ## Next
