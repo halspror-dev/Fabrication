@@ -42,7 +42,7 @@ calibration."
   flow-dynamics wiki page lists only H2D/X1/A1 by name for automatic mode and describes the eddy-current method (purge
   at the wiper, measure extrusion force) for A1/H2D ([calibration_pa](https://wiki.bambulab.com/en/software/bambu-studio/calibration_pa)). **[S]**
   That page is older than the P2S; we expect the P2S to use the same eddy-current method. **[I]** Confirm on BigGuy in
-  Studio's Calibration tab (step 5).
+  Studio's Calibration tab (step 4 check, before calibrating).
 
 **Not automated on the P2S (we do these)**
 - *Flow rate (flow ratio)*: "Auto-Calibration ... Only X1 series support Auto calibration." Manual mode has a coarse
