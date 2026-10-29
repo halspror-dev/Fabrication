@@ -123,7 +123,8 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
 ## Next
 - Step 5, batch 0 of `PLAN.md`, in a fresh thread, when carlie unboxes the printer. That thread also writes
   `coupons/make_coupons.py` and runs it on BigGuy.
-- Before batch 3: carlie names the spray paint and thinner cans used near the sleeves (read their SDS first).
+- Batch 3 / T13: carlie (2026-10-29): this is for a product, so general aerosol mess is fine to test against; no specific
+  cans needed. Use common spray paint and a common thinner on hand, and record which ones in the test record.
 - Batch 2 thread: adopt the review's plan additions (C4 lobed hole, C4b, T9 printed tab in slot) into `PLAN.md`
   before printing C4, and cap the frame's hole compensation at +0.15 per side.
 - Step 7 records: keyhole sizes, grip-sleeve end cap in the preview, how far each sleeve sits proud, holes drilled.
