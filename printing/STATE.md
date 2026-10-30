@@ -107,8 +107,17 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   `archive/printing/2026-10-29-fabrication-fit-tolerances.md`). Step 3 research PRs #13-#16 were merged
   into this branch with their `STATE.md` conflicts resolved.
 
+- 2026-10-30 (offline printing decision, thread "Set up fully offline P2S printing"): carlie unboxed the P2S, removed
+  the shipping screws and foam, and accepted the on-screen initial calibrations; it has never been online. Decision
+  (`research/setup-slicer.md` §4a): **USB drive only**. The printer never joins Wi-Fi or an account; Studio on
+  BigGuy slices and uses Export plate sliced file to the drive; Bambu Network Plugin not installed (only needed to
+  send over a network). The top USB-A port is for a flash drive, not a PC cable. Firmware updates by USB. Costs: no
+  live monitoring and probably no Studio Calibration tab, so T1 flow dynamics runs from the printer's print-start
+  option and T2 flow rate may need our own coupon (`PLAN.md` updated). LAN Only is the fallback.
+
 ## Next
-- Step 5, batch 0 of `PLAN.md`, in a fresh thread, when carlie unboxes the printer. That thread also writes
+- Step 5, batch 0 of `PLAN.md`, in a fresh thread (printer is unboxed and calibrated, 2026-10-30; batch 0 items 1-3
+  are done apart from the USB drive format and the filament-bag check). That thread also writes
   `coupons/make_coupons.py` and runs it on BigGuy.
 - Before batch 3: carlie names the spray paint and thinner cans used near the sleeves (read their SDS first).
 - Step 6 (STL review) needs no printer and can run any time.
