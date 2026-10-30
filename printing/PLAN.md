@@ -62,19 +62,18 @@ unless tagged.
 1. **Unbox** per Bambu's P2S unboxing page. Leave the foam under the bed until the first calibration is done; build
    plate on the bed; a container under the purge chute; a FAT32 USB drive in the printer.
    Look in the filament box: is each roll's bag sealed with a desiccant pack? (`petg.md` open question.)
-2. **Power on, Wi-Fi, then LAN Only before any login.** Printer screen: Settings > LAN Only on, Developer Mode
-   **off**. If the printer refuses to go further without a Bambu account login, that's carlie's call at the
-   printer; our recommendation: a one-time login is acceptable because nothing is sliced yet, then switch to LAN Only
-   straight away and never cloud-print **[I]**. Optional: reserve the printer's IP in the router.
+2. **No network (changed 2026-10-30, `setup-slicer.md` §4a).** The printer never joins Wi-Fi or an account; every
+   file goes from BigGuy on the USB drive. Printer screen: Settings > USB Storage > Format External Storage (FAT32).
+   LAN Only stays the fallback if batch 1 needs Studio's Calibration tab **[I]**.
 3. **Initial calibration** on the screen (bed leveling, vibration compensation, motor noise cancellation, nozzle
    offset). Then remove the foam under the bed.
 4. **Firmware:** compare Settings > Firmware with the P2S release history page (latest listed 01.03.00.00,
    2026-09-21). If behind, update offline from the USB drive (20-30 min, don't cut power), then rerun motor noise
    cancellation.
-5. **BigGuy: Bambu Studio.** Install from bambulab.com/en/download/studio, skip the login, Device tab, bind the
-   printer with its access code (lock icon). Record the Studio version.
+5. **BigGuy: Bambu Studio.** Install from bambulab.com/en/download/studio, skip the login, bind no printer. Record
+   the Studio version. Slice, then Print Plate arrow > Export plate sliced file to the USB drive's root.
    Check and write down in the batch 0 record (each is an open question from step 3):
-   - Studio sees and controls the printer while logged out (yes/no).
+   - The printer's Print Files screen lists and prints a file exported from Studio (yes/no; the first print, T0a, tests it).
    - The `Bambu PETG Matte @BBL P2S 0.4 nozzle` preset shows nozzle 240 °C, flow ratio 0.95, max volumetric speed
      13 mm³/s, plate 70 °C (which of the three stored values the stock hotend uses).
    - The Calibration tab for the P2S lists: flow dynamics auto/manual, flow rate, and any temp tower, max flowrate,
@@ -100,8 +99,8 @@ Wash the plate (dish soap, water), glue stick on, roll 1 dried.
 | ID | Test | What it proves | Prediction (pass band) | Profile change |
 |---|---|---|---|---|
 | T0b | Stringing towers C1, dried roll 1, stock profile | Whether this roll in this room needs drying | Fewer or equal strings than T0a; if T0a was already clean, drying is optional for fresh rolls **[I]** (Bambu says PETG Matte needs drying only after >72 h at 50% RH, `petg.md` **[S]**) | none; the result sets the drying rule in `STATE.md` |
-| T1 | Flow dynamics, Studio Calibration tab, auto if the P2S offers it, else manual PA line | Pressure advance (K) for this filament | Runs and stores a K value in the printer; record it **[S]**. No number predicted: no source gave a PETG Matte K for the P2S | K saved on the printer, noted in `filament-petg-matte-p2s-v1` |
-| T2 | Flow rate, coarse then fine (manual, Studio) | Flow ratio | Fine pass lands 0.93-0.97 around the stock 0.95 **[S]** (`petg.md`: PETG-like 0.93-0.96) | flow ratio |
+| T1 | Flow dynamics: printer screen's advanced option at print start (auto/on), offline **[S]** `setup-slicer.md` §4a; Studio Calibration tab only if we go LAN Only | Pressure advance (K) for this filament | Runs and stores a K value in the printer; record it **[S]**. No number predicted: no source gave a PETG Matte K for the P2S | K saved on the printer, noted in `filament-petg-matte-p2s-v1` |
+| T2 | Flow rate, coarse then fine: Studio's manual test if it works without a printer, else our own block coupon with flow ratio set per object (same 5 % then 1 % steps) **[I]** | Flow ratio | Fine pass lands 0.93-0.97 around the stock 0.95 **[S]** (`petg.md`: PETG-like 0.93-0.96) | flow ratio |
 | T3 | Bambu air deflector (download the .3mf from Bambu's "preventing warping P2S/X2D" page, print only the shorter one, in PETG) | Not a test: the accessory Bambu recommends for PETG-only prints | Prints clean on the stock profile **[S]** `accuracy.md` S14 | install it in the deflecting position for every PETG print |
 | T4 | Elephant foot cube C2 on `process-fit-0.20-v0`: 25 × 25 × 10 mm, elephant foot compensation 0, no brim, cool on the bed | Bottom flare to compensate | Bottom minus top 0.10-0.25 mm per axis **[I]** (the stock 0.15 sits in that band, `accuracy.md` **[S]**) | elephant foot compensation (process) |
 | T5 | Shrink bars C3 on `process-fit-0.20-v0`: 100 × 10 × 4 mm, one along X, one along Y, same plate as T4 | Filament shrinkage in X and Y | 99.5-100.0 mm (0-0.5 % shrink) **[I]**, which includes forum reports of 19.9 on 20 mm cubes (`accuracy.md` R2, a forum report) | shrinkage % (filament) = measured / 100 × 100 |
