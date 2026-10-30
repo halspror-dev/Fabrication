@@ -18,6 +18,7 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
 - `profiles/`: exported slicer profiles, one file per profile, versioned by git. See `profiles/README.md`.
 - `tests/`: one record per print, calibration coupons included. See `tests/README.md` for the format; prediction
   scores in `tests/SCORES.md`.
+- `coupons/make_coupons.py`: the calibration coupons C1-C8 (C4/C5 only with `--private`, on BigGuy, outside OneDrive).
 
 ## Roadmap (carlie, 2026-10-29; each step is its own thread)
 1. Catch up and set up `printing/`. **Done 2026-10-29.**
@@ -115,10 +116,22 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   live monitoring and probably no Studio Calibration tab, so T1 flow dynamics runs from the printer's print-start
   option and T2 flow rate may need our own coupon (`PLAN.md` updated). LAN Only is the fallback.
 
+- 2026-10-30 (step 5, batch 0 prepared, thread "Run calibration batch 0"): carlie's steps in project file
+  `plans/batch0-steps.md` (post-calibration checks, Studio readings, v0 bundle export, T0a from the bag, calipers,
+  overnight drying). Records with blanks: `tests/2026-10-30-batch0-setup.md`, `tests/2026-10-30-T0a-stringing-1.md`
+  (prediction written). **Drying settled [S]:** the TDS lists 65 °C 8 h for a blast drying oven and 80 °C 12 h for
+  the P2S heatbed; the box label is the oven line, so roll 1 dries on the bed at 80 °C, 12 h. Wrote
+  `coupons/make_coupons.py` (all 11 STLs watertight, C4 sizes checked at mid-height; C4 now has the step 6 4-lobe
+  hole; C6 angles are from vertical, as T11's prediction reads). Only the plain C1 STL went to carlie. carlie's
+  BigGuy folder for Claude is under OneDrive, which syncs to the cloud: private coupons go to C:\PrintLocal instead.
+
 ## Next
-- Step 5, batch 0 of `PLAN.md`, in a fresh thread (printer is unboxed and calibrated, 2026-10-30; batch 0 items 1-3
-  are done apart from the USB drive format and the filament-bag check). That thread also writes
-  `coupons/make_coupons.py` and runs it on BigGuy.
+- carlie runs `plans/batch0-steps.md` and sends the numbers and the v0 bundle. A fresh thread fills the two batch 0
+  records, commits `profiles/bundle-p2s-stock-v0.bbscfg`, scores T0a, ticks batch 0 in `PLAN.md`, then starts
+  batch 1 (needs: roll 1 dried, a hygrometer, glue stick, the air deflector T3 printed). Batch 1 needs only plain
+  coupons (C1-C3).
+- Before batch 2: get Python + manifold3d + shapely on BigGuy (or a Remote Control session there) and run
+  `make_coupons.py C:\PrintLocal --private` from a Fabrication checkout outside OneDrive; install OrcaSlicer.
 - Before batch 3: carlie names the spray paint and thinner cans used near the sleeves (read their SDS first).
 - Step 6 (STL review) needs no printer and can run any time.
 

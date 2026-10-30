@@ -54,7 +54,8 @@ rounding rule in `accuracy.md`.
 
 Status: `[ ]` not started, `[x]` done (with the date and test record names).
 
-### Batch 0: first day, no coupons yet [ ]
+### Batch 0: first day, no coupons yet [ ] (prepared 2026-10-30: carlie's steps in project file
+`plans/batch0-steps.md`, records `tests/2026-10-30-batch0-setup.md` and `tests/2026-10-30-T0a-stringing-1.md`)
 
 Where: front porch to the bench, printer screen, BigGuy. Source for every step: `setup-slicer.md` §1, §4, §5 **[S]**
 unless tagged.
@@ -83,13 +84,15 @@ unless tagged.
    `bundle-p2s-stock-v0.bbscfg`. That is the baseline every later version is diffed against.
 7. **BigGuy: OrcaSlicer**, for the Studio-vs-Orca hole test only: install, don't install the Bambu network plugin,
    don't log in, never connect it to the printer; files go by USB drive. Record the version.
-8. **Coupons:** the batch 0 thread writes `printing/coupons/make_coupons.py` (manifold3d, like `make_stl.py`) for
-   coupons C2 to C6 below, then runs it on BigGuy (Remote Control session) into a local folder. STLs stay on BigGuy.
+8. **Coupons:** `printing/coupons/make_coupons.py` (written 2026-10-30) writes C1-C8. The plain ones (C1-C3, C6-C8)
+   carry no design sizes. C4 and C5 copy sizes from `templates.py` and are written only with `--private`, on BigGuy,
+   into a folder no cloud syncs (C:\PrintLocal, not the OneDrive Desktop or Documents) before batch 2.
 9. **Room and filament:** a cheap hygrometer next to the printer and in the filament bin; record both. Open roll 1
    only.
 10. **First print, from the bag: stringing check T0a** (two thin towers, see C1) on roll 1 straight from the bag,
     stock profile. Then put roll 1 on the bed to dry overnight: printer screen Dry Filament, 80 °C, 12 h, spool on
-    the plate under its box, flip at 6 h if awake **[S]** `petg.md` §3.
+    the plate under its box, flip at 6 h if awake **[S]** `petg.md` §3. The box label's 65 °C 8 h is the same TDS's
+    blast-drying-oven line, so it doesn't change this **[S]** (TDS V1.0 "Drying Settings before Printing").
 
 ### Batch 1: flow and first-layer basics (roll 1 dried) [ ]
 
@@ -137,7 +140,7 @@ Decisions written down after batch 2:
 
 | ID | Test | What it proves | Prediction (pass band) |
 |---|---|---|---|
-| T11 | Overhang coupon C6: ramps at 30, 40, 45, 50, 60, 70° from the bed, no supports, `process-fit-0.20-v2` | The overhang limit for this filament on this printer | Clean to 45°, droopy but usable to about 60°, poor at 70° **[I]**; Bambu's rule is 45° (`design-strength.md` **[S]**); the TDS "~70°" is ambiguous |
+| T11 | Overhang coupon C6: ramps overhanging 30, 40, 45, 50, 60, 70° from vertical (as the prediction reads; 1-6 ticks mark them), no supports, `process-fit-0.20-v2` | The overhang limit for this filament on this printer | Clean to 45°, droopy but usable to about 60°, poor at 70° **[I]**; Bambu's rule is 45° (`design-strength.md` **[S]**); the TDS "~70°" is ambiguous |
 | T12 | Strength bars C7: 60 × 10 × 6 mm, 2 flat at 240 °C, 2 standing at 240 °C, 2 standing at 250 °C (after its own flow dynamics run at 250 °C, so K matches), 4 walls, 25 % infill | Layer-line weakness and whether hotter printing helps bonding on our printer | Standing bars break at a layer line at 0.6-0.8 of the flat bars' load (TDS Z/XY: tensile 70 %, bending 72 % **[S]**); 250 °C standing beats 240 °C standing (CNC Kitchen, `design-strength.md` **[S]**). Load: hang a bucket from the bar's end with the other end clamped, add water until it breaks, weigh the bucket. Flat bars bend a lot before breaking (CNC Kitchen: PETG stretched) **[S]** |
 | T13 | Solvent coupons C8: 7 bars in the sleeve's wall settings. 2 dry controls; 2 wiped daily for 7 days with carlie's spray paint; 2 wiped with carlie's thinner (wet rag, 10 s); 1 half-soaked 24 h in the thinner | Whether PETG Matte survives the sleeves' real chemicals | Paint wipes: surface marks only, no swelling over 0.05 mm, bends like the controls. Mineral-spirits thinner: same. Lacquer thinner (ketones/acetates): softening or whitening, and the soak bar fails **[I]** from `petg.md` §5 (Kaptan 2025 acetone result **[S]**). Needs the names of the actual cans first |
 
@@ -160,9 +163,9 @@ If T14 passes, the profiles are frozen for the v0.95 test print (step 7) and `ST
 | C1 | Two 5 mm round towers, 20 mm tall, 50 mm apart, on a thin base | Stringing check; no Fabrication sizes |
 | C2 | 25 × 25 × 10 mm cube | Bambu's elephant foot procedure (`accuracy.md` S2) |
 | C3 | 100 × 10 × 4 mm bar | One along X, one along Y |
-| C4 | Fit plate, 3.175 mm thick (prints 3.20), about 70 × 45 mm outline: vertical holes at 6.35 (two, plus 6.45 and 6.25 beside them), 3.18, 5.11; slots 15 mm long at 3.25, 5.03 and 3.43 wide; plus a 10 mm-wide block with one horizontal 6.35 hole for comparison | Holes as vertical as they are in the parts; sizes from the fit table. Real sizes stay off the internet |
+| C4 | Fit plate, 3.175 mm thick (prints 3.20), 70 × 45 mm, notched corner at the origin: vertical holes at 6.35 (two, plus 6.45 and 6.25 beside them), 3.18, 5.11; slots 15 mm long at 3.25, 5.03 and 3.43 wide; the frame's 4-lobe pivot hole (added 2026-10-30 from the step 6 review); plus C4h, a 10 mm-wide block with one horizontal 6.35 hole for comparison | Holes as vertical as they are in the parts; sizes from the fit table. Real sizes stay off the internet |
 | C5 | 20 mm discs at 2.286 mm (two: plain and Precise Z), a 20 mm square at 3.175 mm, a shim at 0.794 mm | Z rounding |
-| C6 | Overhang ramps 30-70° | No Fabrication sizes |
+| C6 | Overhang ramps 30-70° from vertical, 10 mm tall, 1-6 ticks on the base | No Fabrication sizes |
 | C7 | 60 × 10 × 6 mm bars | Strength |
 | C8 | 60 × 10 × 3 mm bars | Solvent wipes, sleeve wall settings |
 
