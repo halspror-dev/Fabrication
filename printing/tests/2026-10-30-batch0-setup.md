@@ -17,7 +17,7 @@ project file `plans/batch0-steps.md`. Blanks are filled in from carlie's answers
 - v0 preset bundle exported: ____ (goes to `../profiles/bundle-p2s-stock-v0.bbscfg`).
 - OrcaSlicer: not needed until batch 2 (T7); install then.
 - Filament: roll 1 colour **white** (easy to write on); bag perfectly sealed with desiccant: **yes** (2026-10-31).
-- Caliper: make ____ (Seiko or NEIKO?); 1/4" clevis pin shank ____ / ____ / ____ mm (expect about 6.30-6.35 **[I]**).
+- Caliper: **NEIKO** digital, 0.01 mm display, zero 0.00 with closed jaws (photo 2026-10-31; settles Seiko vs NEIKO). Check on carlie's 1/8" aluminium sheet, mid-sheet: 3.08 / 3.12 / 3.10 mm, mean 3.10, spread 0.04 (sheet itself ~0.07 under 3.175 nominal). 1/4" clevis pin shank ____ / ____ / ____ mm (expect about 6.30-6.35 **[I]**).
 - Room: ____ °C, ____ % RH (hygrometer: ____).
 - Drying decision **[S]**: Bambu PETG Matte TDS V1.0 gives "Blast Drying Oven: 65 °C, 8 h" and "X Series & P Series
   & H2 Series Printer Heatbed: 80 °C, 12 h". The box label's 65 °C 8 h is the oven line, so it doesn't conflict with
