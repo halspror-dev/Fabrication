@@ -140,6 +140,13 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   BigGuy, reached only over carlie's VPN, text-only ntfy alerts, printer blocked from the internet. This reverses the
   USB-only decision, so it waits on carlie's yes. 38 fetches (25 OK; github.com blocked, READMEs via raw).
 
+- 2026-10-31 (remote monitoring set up, thread "Set up Bambuddy remote monitoring"): carlie said yes. Bambuddy 1.2.5.7
+  in Docker in CT208 on pve (homelab chose the node/ID/pattern), login on, live camera works on BigGuy, page reachable
+  from the phone over Tailscale, ntfy.sh alerts (test arrived). Printer: LAN Only on before first Wi-Fi join (never
+  touched Bambu Cloud), Liveview + Developer Mode on, IP 192.168.68.78 (DHCP). **Privacy line changed (carlie):
+  home LAN copies are fine, the cloud is the line**; print photos in ntfy alerts OK, files never. Details and
+  settings: `monitoring.md`. Router changes postponed. Print v095-set1 finished: 81 g (carlie).
+
 ## Next
 - Batch 1 in a fresh thread (flow dynamics at print start, flow ratio, air deflector T3, elephant-foot cube C2,
   shrink bars C3), roll 1 as is. Still open from batch 0: flow ratio and max volumetric speed of the stock preset
@@ -149,8 +156,8 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
 - Batch 3 / T13: generic spray paint and a common thinner (carlie 2026-10-29); record which ones in the test record.
 - Step 6 STL review is in PR #18 (unmerged; its STATE.md predates this file and will conflict).
 
-- If carlie says yes to remote monitoring: one thread sets it up, one literal step per message, per
-  `research/remote-monitoring.md` §6.
+- Remote monitoring follow-ups (`monitoring.md`): on the next print, check it shows in Bambuddy when started from
+  the USB drive and the ntfy alert arrives; router DHCP reservation + internet block for the printer when carlie can.
 
 ## What failed
 - Nothing yet.
