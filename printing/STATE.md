@@ -125,15 +125,23 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   hole; C6 angles are from vertical, as T11's prediction reads). Only the plain C1 STL went to carlie. carlie's
   BigGuy folder for Claude is under OneDrive, which syncs to the cloud: private coupons go to C:\PrintLocal instead.
 
+- 2026-10-31 (step 5, batch 0 done with carlie live): firmware 01.00.05.00 updated offline to 01.03.00.00, motor
+  noise cancellation rerun; printer screen print options set (spaghetti, clumping, pile-up Medium; plate type
+  detection; step-loss recovery; snapshot off; never on Wi-Fi). Studio (latest; Help > About shows no number) stock
+  PETG Matte: nozzle 240, Textured PEI 70. Caliper is the NEIKO (check: carlie's 1/8" sheet 3.08/3.12/3.10).
+  **T0a: 0 strings from the sealed bag (hit)**; towers 4.98/4.96 on 5.00, span 54.9 on 55.0, height ~20.15 on 20.00.
+  First attempt printed air because filament was never loaded: always check the spool screen before Print.
+  **Drying rule changed:** roll 1 not dried; dry only after >~3 days open or if towers string. carlie works best with
+  one literal step per message while at the printer.
+
 ## Next
-- carlie runs `plans/batch0-steps.md` and sends the numbers and the v0 bundle. A fresh thread fills the two batch 0
-  records, commits `profiles/bundle-p2s-stock-v0.bbscfg`, scores T0a, ticks batch 0 in `PLAN.md`, then starts
-  batch 1 (needs: roll 1 dried, a hygrometer, glue stick, the air deflector T3 printed). Batch 1 needs only plain
-  coupons (C1-C3).
+- Batch 1 in a fresh thread (flow dynamics at print start, flow ratio, air deflector T3, elephant-foot cube C2,
+  shrink bars C3), roll 1 as is. Still open from batch 0: flow ratio and max volumetric speed of the stock preset
+  (Advanced toggle), v0 preset bundle export, clevis pin caliper check, room temperature/RH (hygrometer).
 - Before batch 2: get Python + manifold3d + shapely on BigGuy (or a Remote Control session there) and run
   `make_coupons.py C:\PrintLocal --private` from a Fabrication checkout outside OneDrive; install OrcaSlicer.
-- Before batch 3: carlie names the spray paint and thinner cans used near the sleeves (read their SDS first).
-- Step 6 (STL review) needs no printer and can run any time.
+- Batch 3 / T13: generic spray paint and a common thinner (carlie 2026-10-29); record which ones in the test record.
+- Step 6 STL review is in PR #18 (unmerged; its STATE.md predates this file and will conflict).
 
 ## What failed
 - Nothing yet.

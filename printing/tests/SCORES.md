@@ -5,3 +5,4 @@ number that shows which research or inference was wrong. Hit rate by batch goes 
 
 | Date | Test | Prediction (band) | Measured | Hit/miss | Record | Note |
 |---|---|---|---|---|---|---|
+| 2026-10-31 | T0a | 0-3 strings from the sealed bag | 0 strings | hit | `2026-10-30-T0a-stringing-1.md` | Roll 1 white, sealed with desiccant |
