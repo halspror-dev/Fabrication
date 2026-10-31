@@ -52,6 +52,8 @@ write("C1-stringing-towers", box(60, 8, 0.6).translate((-5, -4, 0)) + cyl(20, 5)
 # C2 elephant foot cube; C3 shrink bar (print two: one along X, one turned 90 degrees along Y)
 write("C2-cube-25x25x10", box(25, 25, 10))
 write("C3-shrink-bar-100x10x4", box(100, 10, 4))
+# Batch 1 plate: C2 plus both C3 bars in one file (X bar along the front, Y bar along the left, 15 mm gaps)
+write("B1-cube-and-shrink-bars", box(100, 10, 4) + box(10, 100, 4).translate((0, 25, 0)) + box(25, 25, 10).translate((40, 40, 0)))
 # C6 overhang ramps, left to right 30, 40, 45, 50, 60, 70 degrees from vertical, 6 mm apart, one tick per ramp on a
 # 0.6 mm base so the order can be read after printing
 parts, x = [], 0.0

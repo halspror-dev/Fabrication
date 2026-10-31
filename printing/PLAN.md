@@ -94,7 +94,8 @@ unless tagged.
     the plate under its box, flip at 6 h if awake **[S]** `petg.md` §3. The box label's 65 °C 8 h is the same TDS's
     blast-drying-oven line, so it doesn't change this **[S]** (TDS V1.0 "Drying Settings before Printing").
 
-### Batch 1: flow and first-layer basics [ ]
+### Batch 1: flow and first-layer basics [ ] (prepared 2026-10-31: carlie's steps in project file `plans/batch1-steps.md`;
+T4 and T5 share one plate, `make_coupons.py` B1, with T1 at its print start; records `tests/2026-10-31-T3-*`, `-T4T5-*`)
 
 Changed 2026-10-31 after T0a (0 strings from the sealed bag): roll 1 is used as is, not dried. T0b runs only if roll 1
 has been open more than ~3 days by then (Bambu: drying needed after >72 h at 50% RH, `petg.md` **[S]**).

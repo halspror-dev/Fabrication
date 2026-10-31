@@ -134,14 +134,19 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   **Drying rule changed:** roll 1 not dried; dry only after >~3 days open or if towers string. carlie works best with
   one literal step per message while at the printer.
 
+- 2026-10-31 (step 5, batch 1 prepared, thread "Run calibration batch 1"): steps in project file
+  `plans/batch1-steps.md` (Studio leftovers + v0 bundle, T3 air deflector, `process-fit-0.20-v0` = stock 0.20 +
+  3 walls + elephant foot 0, one plate B1 = C2 cube + both C3 bars with T1 flow dynamics at print start). B1 added to
+  `make_coupons.py`; plain STL sent to carlie. Records with predictions: `tests/2026-10-31-T3-air-deflector-1.md`,
+  `tests/2026-10-31-T4T5-cube-and-bars-1.md`. T2 flow rate waits on whether Studio's Calibration tab works offline
+  (else OrcaSlicer's flow calibration, offline, or our own coupon).
+
 ## Next
-- Batch 1 in a fresh thread (flow dynamics at print start, flow ratio, air deflector T3, elephant-foot cube C2,
-  shrink bars C3), roll 1 as is. Still open from batch 0: flow ratio and max volumetric speed of the stock preset
-  (Advanced toggle), v0 preset bundle export, clevis pin caliper check, room temperature/RH (hygrometer).
+- carlie runs `plans/batch1-steps.md` A-E, one step at a time; fill the T3 and T4/T5 records, score T4/T5, then T2.
 - Before batch 2: get Python + manifold3d + shapely on BigGuy (or a Remote Control session there) and run
   `make_coupons.py C:\PrintLocal --private` from a Fabrication checkout outside OneDrive; install OrcaSlicer.
-- Batch 3 / T13: generic spray paint and a common thinner (carlie 2026-10-29); record which ones in the test record.
-- Step 6 STL review is in PR #18 (unmerged; its STATE.md predates this file and will conflict).
+- Batch 3 / T13: generic spray paint and a common thinner (carlie 2026-10-29).
+- Step 6 STL review is in PR #18 (unmerged).
 
 ## What failed
 - Nothing yet.
