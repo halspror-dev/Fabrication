@@ -134,6 +134,12 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   **Drying rule changed:** roll 1 not dried; dry only after >~3 days open or if towers string. carlie works best with
   one literal step per message while at the printer.
 
+- 2026-10-31 (side research, remote monitoring): `research/remote-monitoring.md`. Live camera + failure alerts
+  are possible with open-source tools (Bambuddy lists the P2S) but all need the printer on the LAN with LAN Only +
+  Liveview + Developer Mode; firmware 01.03 changed nothing about access. Recommended: Bambuddy on the homelab or
+  BigGuy, reached only over carlie's VPN, text-only ntfy alerts, printer blocked from the internet. This reverses the
+  USB-only decision, so it waits on carlie's yes. 38 fetches (25 OK; github.com blocked, READMEs via raw).
+
 ## Next
 - Batch 1 in a fresh thread (flow dynamics at print start, flow ratio, air deflector T3, elephant-foot cube C2,
   shrink bars C3), roll 1 as is. Still open from batch 0: flow ratio and max volumetric speed of the stock preset
@@ -142,6 +148,9 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   `make_coupons.py C:\PrintLocal --private` from a Fabrication checkout outside OneDrive; install OrcaSlicer.
 - Batch 3 / T13: generic spray paint and a common thinner (carlie 2026-10-29); record which ones in the test record.
 - Step 6 STL review is in PR #18 (unmerged; its STATE.md predates this file and will conflict).
+
+- If carlie says yes to remote monitoring: one thread sets it up, one literal step per message, per
+  `research/remote-monitoring.md` §6.
 
 ## What failed
 - Nothing yet.
