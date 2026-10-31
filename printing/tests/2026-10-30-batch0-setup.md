@@ -7,10 +7,10 @@ project file `plans/batch0-steps.md`. Blanks are filled in from carlie's answers
   Initial on-screen calibration: done 2026-10-30 (second run in progress when this was written).
 - Firmware: **01.00.05.00** (carlie screen photo 2026-10-30; no Wi-Fi, no account, no USB drive yet). Older than the
   latest listed, 01.03.00.00 (2026-09-21), so update offline by USB before T0a. Updated 2026-10-31: **01.03.00.00** (screen photo). Speed mode Standard.
-- Build plate type (as printed on it): ____.
+- Build plate type: Textured PEI (Studio selection 2026-10-31).
 - Flash drive formatted on the printer (FAT32): ____.
-- Bambu Studio version: ____. Network plugin: not installed. Login: none.
-- Stock `Bambu PETG Matte @BBL P2S 0.4 nozzle` shows: nozzle ____ °C, plate ____ °C (plate type above), flow ratio
+- Bambu Studio version: Help > About wouldn't show it; update check says latest (2026-10-31). Network plugin: not installed. Login: none.
+- Stock `Bambu PETG Matte @BBL P2S 0.4 nozzle` shows (Studio screenshots 2026-10-31): nozzle **240** °C (first and other layers), Textured PEI plate **70** °C, recommended nozzle range 230-270, softening temp 70, part fan 30-60 %, first 3 layers fan 0, aux fan 0. Process `0.20mm Standard @BBL P2S`, seam Aligned. Flow ratio
   ____, max volumetric speed ____ mm³/s. Expected 240, 70, 0.95, 13 **[S]** `../research/petg.md`.
 - Calibration tab offline: ____ (list, or greyed out).
 - Develop mode shows Precise wall for the P2S: ____.
