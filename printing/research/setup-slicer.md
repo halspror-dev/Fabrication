@@ -13,9 +13,10 @@ Evidence (raw pages, text, fetch log) is in `/mnt/project-files/research/printin
    offline second slicer (files by USB drive, no network) for extra calibration models and, if a measured hole
    coupon says so, for the fit-critical parts (polyholes, precise wall). Reasons below. **[I]** built
    on [S] facts.
-2. **Network: LAN Only mode on the printer, Developer Mode off, never cloud printing, never MakerWorld upload.**
-   Cloud printing stores the sliced G-code on Bambu's servers, and G-code is the part geometry, so it would break the
-   "nothing leaves our machines" rule. **[S]** + **[I]**
+2. **Network: none. The printer never joins Wi-Fi; files go from BigGuy to the printer on a USB drive** (decided
+   2026-10-30, section 4a). LAN Only (Developer Mode off) is the fallback only if a calibration we need turns out
+   to require a connected printer. Never cloud printing, never MakerWorld upload: cloud printing stores the sliced
+   G-code on Bambu's servers, and G-code is the part geometry. **[S]** + **[I]**
 3. **First day:** let the printer run its own initial calibration (foam left under the bed until it finishes), then
    do the manual calibrations Bambu does not automate on the P2S: flow rate (manual only), and the accuracy checks
    (XY hole/contour compensation) the accuracy thread specifies. **[S]**
@@ -198,13 +199,95 @@ can send to an authorization-firmware printer without the same Connect/Developer
   Don't log Studio in, don't use MakerWorld/"Publish", and keep `Fabrication` STLs only on BigGuy and the repo.
   The camera has no privacy cover (Bambu offers a printable one: [P2S intro](https://wiki.bambulab.com/en/p2s/manual/p2s-intro)). **[S]**
 
+## 4a. Offline USB-drive printing vs. LAN Only (added 2026-10-30)
+
+carlie's printer has had its initial on-screen calibrations and has never been on the internet or Wi-Fi. Question:
+keep it that way and print from a USB drive, or use LAN Only? Evidence in
+`/mnt/project-files/research/offline-printing/` (16 fetches, 14 OK, 2 guessed URLs 404; one forum page came back
+without its post text, nothing cited from it; 3 web searches used only to find URLs).
+
+**What the USB port is** **[S]** ([P2S intro](https://wiki.bambulab.com/en/p2s/manual/p2s-intro)): "USB Storage Port:
+A USB-A port supporting USB 2.0 protocol, which allows offline printing via a USB drive and storing time-lapse video
+files." It is a port for a flash drive, not a link to a computer. A USB cable from BigGuy to it would not work:
+both ends are hosts, and no Bambu page describes printing over a USB cable. **[I]**
+
+**Drive requirements** **[S]** ([P2S FAQ](https://wiki.bambulab.com/en/p2s/manual/p2s-faq)): USB 2.0 or faster,
+write speed above 10 MB/s, FAT32 or exFAT, one drive only (no hub). Windows formats FAT32 only up to 32 GB; the
+printer can format a drive itself (Settings > USB Storage > Format External Storage, FAT32 only)
+([offline firmware](https://wiki.bambulab.com/en/p2s/manual/offline-firmware-update)). Without a drive there is no
+recording/timelapse and no log export (FAQ). **[S]**
+
+**Printing from the drive** **[S]**: the printer screen's homepage has Print Files
+([screen operation](https://wiki.bambulab.com/en/p2s/manual/screen-operation)); for the P2S, "tap Print Files, then
+select the model ... Confirm the build plate and nozzle settings. Set timelapse and advanced options as needed
+(default is auto), then tap Next ... Select the loaded filament and tap Print"
+([P2S first print](https://wiki.bambulab.com/en/p2s/manual/first-print)). Bambu Studio writes the file with
+Print Plate's arrow > **Export plate sliced file**, saved to the root of the card/drive, not a subfolder (Bambu's
+[A1 SD-card guide](https://wiki.bambulab.com/en/a1/manual/how-to-print-from-sd-card) **[S]**; there is no P2S-specific
+page, we tried the obvious URL and got 404, so the same menu on a P2S is **[I]**, to confirm on BigGuy).
+
+**Where the file ends up** **[S]** ([internal storage](https://wiki.bambulab.com/en/knowledge-sharing/how-to-use-internal-model-cache-space)):
+a print started from a USB drive is also copied into the printer's internal cache (up to 8 files / 500 MB, oldest
+deleted first, can't be turned off). The cache is "stored locally on the printer, independent of Bambu cloud
+storage". So a copy of each sliced part stays in the printer until pushed out. With no network that copy can't go
+anywhere **[I]**; it matters only if the printer is ever sold, serviced or put online. Bambu's own answer for
+confidential models is LAN Only + a USB drive + send to external storage (same page), which skips the cache; a print
+started on the screen from the drive does not.
+
+**Firmware offline** **[S]** (offline firmware page): format the drive on the printer, download the P2S package on a
+computer, copy it unchanged (not unzipped, not renamed) to the drive's root, then Settings > Firmware > Update
+Offline, 20-30 min, don't cut power. Latest on the [release history](https://wiki.bambulab.com/en/p2s/manual/p2s-firmware-release-history)
+today: 01.03.00.00 (2026-09-21). Redo motor noise cancellation after any firmware change (section 1). **[S]**
+
+**Flow dynamics without a connection** **[S]** ([calibration_pa](https://wiki.bambulab.com/en/software/bambu-studio/calibration_pa)):
+on H2D/H2S/P2S/X2D the printer purges at the wiper and measures with the eddy-current sensor; in **Automatic** it
+reuses a recent result for the same filament and nozzle, else calibrates; results "will be recorded inside the
+machine". The screen's advanced options default to auto (first-print page). So K values work offline. **[S]** + **[I]**
+What does *not* obviously work offline is Studio's **Calibration tab** (manual flow rate passes, PA line/pattern,
+saving named K profiles to the printer): Bambu's page says "ensure the 3D printer is connected" before calibrating
+**[S]** for automatic mode; we assume the tab's manual tests also want a connected printer **[I]**, to check on BigGuy.
+
+**Bambu Network Plugin (Studio asks to install it on first start)** **[S]**
+([remote control](https://wiki.bambulab.com/en/software/bambu-studio/remote-control)): "The Bambu Network Plugin is
+required for the remote control and monitor features in Bambu Studio. If it is not installed, you cannot send a print
+job via the network, and the 'Device' page will be unavailable." It covers both WAN and LAN control (same page).
+- USB drive only: **not needed**. Slicing and Export plate sliced file are not network features. **[I]** from [S]
+- LAN Only: needed, since sending a job over the LAN goes through it. **[S]**
+- What it sends online: no Bambu page we fetched says. Bambu's [privacy notice](https://bambulab.com/en/policies/privacy)
+  says that for its apps, Bambu Studio named, "we may automatically collect information about your device, network,
+  and activity ... usage data ... diagnostic or performance information" **[S]**; it does not break that down by
+  plugin. OrcaSlicer's README calls the plugin "based on non-free libraries from BambuLab" (section 2) **[S]**, so
+  nobody outside Bambu can check what it does. **[I]**
+- So: **skip it** (Studio keeps working for slicing and export), don't log in, never use Publish/MakerWorld. Install
+  it only if we ever move to LAN Only. A forum search for an official "no-cloud" switch in Studio found only
+  forum posts, none read, nothing cited. **[I]**
+
+| | USB drive only (printer never on a network) | LAN Only (printer on home Wi-Fi) |
+|---|---|---|
+| Privacy | Nothing can leave: no network at all. File copies: drive, BigGuy, printer cache. **[I]** | Bambu: task data "stays within your local area network" ([privacy](https://bambulab.com/en/policies/privacy)) **[S]**, but the printer sits on a network that has internet; nobody we read verified it makes no outbound calls (section 4) **[F]** |
+| Account / login | None needed: carlie's printer got through setup and its first calibrations without ever going online (carlie, 2026-10-30) | Open question whether it ever forces a login (section 4) |
+| Firmware | Offline by USB, by hand **[S]** | Same, offline by USB; no prompts in LAN mode **[F]** |
+| Monitoring | Screen and in person only. No live view, no remote stop. Timelapse to the drive (FAQ) **[S]** | Live view and control from Studio on the LAN **[S]** |
+| Calibration data | Printer's own calibrations and auto flow dynamics stored on the printer **[S]**. Studio Calibration tab probably unusable **[I]** | Full Studio Calibration tab **[S]** |
+| Studio network plugin | Not needed **[I]** | Required **[S]** |
+| Effort per print | Export, walk the drive over, pick the file on screen | Click Send in Studio |
+
+**Recommendation** **[I]**: **USB drive only.** It is the only setup where "nothing leaves our machines" holds by
+construction, rather than by trusting firmware, and it costs us only live monitoring and Studio's guided
+calibration screens. Monitoring: the coupons are small and short, carlie is nearby, and the printer's spaghetti,
+clumping and pile-up detection still pause a print on its own (screen operation **[S]**). Calibration: printer
+calibrations and flow dynamics run offline; flow rate becomes our own coupon (the same test, several copies of a
+block with different flow ratios set per object, sliced on BigGuy) instead of Studio's wizard **[I]**. Revisit only if
+batch 1 shows we can't get a good flow ratio or K value that way; the fallback is LAN Only with the printer's
+internet blocked at the router.
+
 ## 5. First-day sequence to carry into step 4 (draft, [I] built on the [S] items above)
 
 1. Unbox per the wiki, foam in place, plate on, power on, run the on-screen initial calibration; remove the foam.
-2. Wi-Fi; LAN Only on, Developer Mode off (or one-time login first if the printer forces it, carlie's call).
+2. No Wi-Fi (section 4a). Format a USB drive on the printer and leave it in.
 3. Check firmware version against the release history; update offline by USB if behind; redo motor noise
    cancellation afterwards.
-4. BigGuy: install Bambu Studio from bambulab.com, skip login, bind the printer by access code; confirm the P2S
+4. BigGuy: install Bambu Studio from bambulab.com, skip login, don't bind any printer; confirm the P2S
    0.4 nozzle and `Bambu PETG Matte @BBL P2S 0.4 nozzle` presets; export them as the v0 bundle into
    `printing/profiles/`.
 5. Dry the PETG (PETG thread), wash the plate, then: flow dynamics (auto), flow rate coarse then fine (manual),

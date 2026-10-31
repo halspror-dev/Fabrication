@@ -20,6 +20,7 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   scores in `tests/SCORES.md`.
 - `review/`: reviews of Fabrication's print files (step 6: `review/v0.95-stl-review.md`).
 - `tools/`: local scripts (`tools/stl_review.py`: mesh checks on the STLs, nothing uploaded).
+- `coupons/make_coupons.py`: the calibration coupons C1-C8 (C4/C5 only with `--private`, on BigGuy, outside OneDrive).
 
 ## Roadmap (carlie, 2026-10-29; each step is its own thread)
 1. Catch up and set up `printing/`. **Done 2026-10-29.**
@@ -120,14 +121,59 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   `inbox/fabrication/2026-10-29-printing-v0.95-stl-review.md`. The review proposes C4 (lobed hole), new C4b (open
   sleeve slot) and a T9 tab-in-slot check for batch 2; not yet written into `PLAN.md`.
 
+- 2026-10-30 (offline printing decision, thread "Set up fully offline P2S printing"): carlie unboxed the P2S, removed
+  the shipping screws and foam, and accepted the on-screen initial calibrations; it has never been online. Decision
+  (`research/setup-slicer.md` §4a): **USB drive only**. The printer never joins Wi-Fi or an account; Studio on
+  BigGuy slices and uses Export plate sliced file to the drive; Bambu Network Plugin not installed (only needed to
+  send over a network). The top USB-A port is for a flash drive, not a PC cable. Firmware updates by USB. Costs: no
+  live monitoring and probably no Studio Calibration tab, so T1 flow dynamics runs from the printer's print-start
+  option and T2 flow rate may need our own coupon (`PLAN.md` updated). LAN Only is the fallback.
+
+- 2026-10-30 (step 5, batch 0 prepared, thread "Run calibration batch 0"): carlie's steps in project file
+  `plans/batch0-steps.md` (post-calibration checks, Studio readings, v0 bundle export, T0a from the bag, calipers,
+  overnight drying). Records with blanks: `tests/2026-10-30-batch0-setup.md`, `tests/2026-10-30-T0a-stringing-1.md`
+  (prediction written). **Drying settled [S]:** the TDS lists 65 °C 8 h for a blast drying oven and 80 °C 12 h for
+  the P2S heatbed; the box label is the oven line, so roll 1 dries on the bed at 80 °C, 12 h. Wrote
+  `coupons/make_coupons.py` (all 11 STLs watertight, C4 sizes checked at mid-height; C4 now has the step 6 4-lobe
+  hole; C6 angles are from vertical, as T11's prediction reads). Only the plain C1 STL went to carlie. carlie's
+  BigGuy folder for Claude is under OneDrive, which syncs to the cloud: private coupons go to C:\PrintLocal instead.
+
+- 2026-10-31 (step 5, batch 0 done with carlie live): firmware 01.00.05.00 updated offline to 01.03.00.00, motor
+  noise cancellation rerun; printer screen print options set (spaghetti, clumping, pile-up Medium; plate type
+  detection; step-loss recovery; snapshot off; never on Wi-Fi). Studio (latest; Help > About shows no number) stock
+  PETG Matte: nozzle 240, Textured PEI 70. Caliper is the NEIKO (check: carlie's 1/8" sheet 3.08/3.12/3.10).
+  **T0a: 0 strings from the sealed bag (hit)**; towers 4.98/4.96 on 5.00, span 54.9 on 55.0, height ~20.15 on 20.00.
+  First attempt printed air because filament was never loaded: always check the spool screen before Print.
+  **Drying rule changed:** roll 1 not dried; dry only after >~3 days open or if towers string. carlie works best with
+  one literal step per message while at the printer.
+
+- 2026-10-31 (side research, remote monitoring): `research/remote-monitoring.md`. Live camera + failure alerts
+  are possible with open-source tools (Bambuddy lists the P2S) but all need the printer on the LAN with LAN Only +
+  Liveview + Developer Mode; firmware 01.03 changed nothing about access. Recommended: Bambuddy on the homelab or
+  BigGuy, reached only over carlie's VPN, text-only ntfy alerts, printer blocked from the internet. This reverses the
+  USB-only decision, so it waits on carlie's yes. 38 fetches (25 OK; github.com blocked, READMEs via raw).
+
+- 2026-10-31 (remote monitoring set up, thread "Set up Bambuddy remote monitoring"): carlie said yes. Bambuddy 1.2.5.7
+  in Docker in CT208 on pve (homelab chose the node/ID/pattern), login on, live camera works on BigGuy, page reachable
+  from the phone over Tailscale, ntfy.sh alerts (test arrived). Printer: LAN Only on before first Wi-Fi join (never
+  touched Bambu Cloud), Liveview + Developer Mode on, IP 192.168.68.78 (DHCP). **Privacy line changed (carlie):
+  home LAN copies are fine, the cloud is the line**; print photos in ntfy alerts OK, files never. Details and
+  settings: `monitoring.md`. Router changes postponed. Print v095-set1 finished: 81 g (carlie).
+
 ## Next
-- Step 5, batch 0 of `PLAN.md`, in a fresh thread, when carlie unboxes the printer. That thread also writes
-  `coupons/make_coupons.py` and runs it on BigGuy.
-- Batch 3 / T13: carlie (2026-10-29): this is for a product, so general aerosol mess is fine to test against; no specific
-  cans needed. Use common spray paint and a common thinner on hand, and record which ones in the test record.
-- Batch 2 thread: adopt the review's plan additions (C4 lobed hole, C4b, T9 printed tab in slot) into `PLAN.md`
+- Batch 1 in a fresh thread (flow dynamics at print start, flow ratio, air deflector T3, elephant-foot cube C2,
+  shrink bars C3), roll 1 as is. Still open from batch 0: flow ratio and max volumetric speed of the stock preset
+  (Advanced toggle), v0 preset bundle export, clevis pin caliper check, room temperature/RH (hygrometer).
+- Before batch 2: get Python + manifold3d + shapely on BigGuy (or a Remote Control session there) and run
+  `make_coupons.py C:\PrintLocal --private` from a Fabrication checkout outside OneDrive; install OrcaSlicer.
+- Batch 3 / T13: generic spray paint and a common thinner (carlie 2026-10-29); record which ones in the test record.
+- Batch 2 thread: adopt the step 6 review's plan additions (C4 lobed hole, C4b, T9 printed tab in slot) into `PLAN.md`
   before printing C4, and cap the frame's hole compensation at +0.15 per side.
-- Step 7 records: keyhole sizes, grip-sleeve end cap in the preview, how far each sleeve sits proud, holes drilled.
+- Step 7 records (v095-set1 fit check): keyhole sizes, grip-sleeve end cap in the preview, how far each sleeve sits
+  proud, holes drilled.
+
+- Remote monitoring follow-ups (`monitoring.md`): on the next print, check it shows in Bambuddy when started from
+  the USB drive and the ntfy alert arrives; router DHCP reservation + internet block for the printer when carlie can.
 
 ## What failed
 - Nothing yet.
