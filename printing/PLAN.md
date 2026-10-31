@@ -54,7 +54,7 @@ rounding rule in `accuracy.md`.
 
 Status: `[ ]` not started, `[x]` done (with the date and test record names).
 
-### Batch 0: first day, no coupons yet [ ] (prepared 2026-10-30: carlie's steps in project file
+### Batch 0: first day, no coupons yet [x] 2026-10-31 (T0a hit, 0 strings; prepared 2026-10-30: carlie's steps in project file
 `plans/batch0-steps.md`, records `tests/2026-10-30-batch0-setup.md` and `tests/2026-10-30-T0a-stringing-1.md`)
 
 Where: front porch to the bench, printer screen, BigGuy. Source for every step: `setup-slicer.md` §1, §4, §5 **[S]**
@@ -94,10 +94,13 @@ unless tagged.
     the plate under its box, flip at 6 h if awake **[S]** `petg.md` §3. The box label's 65 °C 8 h is the same TDS's
     blast-drying-oven line, so it doesn't change this **[S]** (TDS V1.0 "Drying Settings before Printing").
 
-### Batch 1: flow and first-layer basics (roll 1 dried) [ ]
+### Batch 1: flow and first-layer basics [ ]
+
+Changed 2026-10-31 after T0a (0 strings from the sealed bag): roll 1 is used as is, not dried. T0b runs only if roll 1
+has been open more than ~3 days by then (Bambu: drying needed after >72 h at 50% RH, `petg.md` **[S]**).
 
 Order from `setup-slicer.md` §1 (flow dynamics before flow rate) and `accuracy.md` (flow first, size second) **[S]**.
-Wash the plate (dish soap, water), glue stick on, roll 1 dried.
+Wash the plate (dish soap, water), glue stick on, roll 1 (resealed with desiccant between sessions).
 
 | ID | Test | What it proves | Prediction (pass band) | Profile change |
 |---|---|---|---|---|

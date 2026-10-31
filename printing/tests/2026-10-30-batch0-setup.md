@@ -22,7 +22,7 @@ project file `plans/batch0-steps.md`. Blanks are filled in from carlie's answers
 - Drying decision **[S]**: Bambu PETG Matte TDS V1.0 gives "Blast Drying Oven: 65 °C, 8 h" and "X Series & P Series
   & H2 Series Printer Heatbed: 80 °C, 12 h". The box label's 65 °C 8 h is the oven line, so it doesn't conflict with
   `../research/petg.md`: roll 1 dries on the bed at 80 °C, 12 h, under its box.
-- Roll 1 dried: started ____, 80 °C 12 h, flipped at 6 h ____, sealed with desiccant after ____.
+- Roll 1 not dried (2026-10-31): T0a showed 0 strings from the sealed bag, so drying is skipped; roll resealed in its bag with the desiccant. Rule: dry (bed 80 °C, 12 h) only after >~3 days open or if the towers string.
 
 ## Coupons
 `../coupons/make_coupons.py` written 2026-10-30. Checked in the cloud container: all 11 STLs watertight, one body;
