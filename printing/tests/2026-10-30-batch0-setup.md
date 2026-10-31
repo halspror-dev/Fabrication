@@ -6,7 +6,7 @@ project file `plans/batch0-steps.md`. Blanks are filled in from carlie's answers
 - Printer: P2S, stock 0.4 nozzle, never online, USB-drive printing only (`../research/setup-slicer.md` §4a).
   Initial on-screen calibration: done 2026-10-30 (second run in progress when this was written).
 - Firmware: **01.00.05.00** (carlie screen photo 2026-10-30; no Wi-Fi, no account, no USB drive yet). Older than the
-  latest listed, 01.03.00.00 (2026-09-21), so update offline by USB before T0a; new version ____.
+  latest listed, 01.03.00.00 (2026-09-21), so update offline by USB before T0a. Updated 2026-10-31: **01.03.00.00** (screen photo). Speed mode Standard.
 - Build plate type (as printed on it): ____.
 - Flash drive formatted on the printer (FAT32): ____.
 - Bambu Studio version: ____. Network plugin: not installed. Login: none.
