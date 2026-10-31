@@ -16,7 +16,7 @@ project file `plans/batch0-steps.md`. Blanks are filled in from carlie's answers
 - Develop mode shows Precise wall for the P2S: ____.
 - v0 preset bundle exported: ____ (goes to `../profiles/bundle-p2s-stock-v0.bbscfg`).
 - OrcaSlicer: not needed until batch 2 (T7); install then.
-- Filament: roll 1 colour ____; bag sealed with desiccant: ____.
+- Filament: roll 1 colour **white** (easy to write on); bag perfectly sealed with desiccant: **yes** (2026-10-31).
 - Caliper: make ____ (Seiko or NEIKO?); 1/4" clevis pin shank ____ / ____ / ____ mm (expect about 6.30-6.35 **[I]**).
 - Room: ____ °C, ____ % RH (hygrometer: ____).
 - Drying decision **[S]**: Bambu PETG Matte TDS V1.0 gives "Blast Drying Oven: 65 °C, 8 h" and "X Series & P Series

@@ -6,7 +6,7 @@ File named for the day the prediction was written; the print date goes in Result
 - File: `../coupons/make_coupons.py` C1 (two 5 mm towers, 20 mm tall, 50 mm apart on a 0.6 mm strip), commit ____.
 - Printer: P2S firmware ____, stock 0.4 nozzle, plate ____, glue ____, air deflector out (not printed yet), door
   closed, lid on.
-- Filament: Bambu PETG Matte ____, roll 1, from the bag (not dried), bag sealed with desiccant ____.
+- Filament: Bambu PETG Matte white, roll 1, from the bag (not dried), bag sealed with desiccant: yes.
 - Room: ____ °C, ____ % RH.
 - Slicer: Bambu Studio ____; stock presets (`bundle-p2s-stock-v0`): `0.20mm Standard @BBL P2S`,
   `Bambu PETG Matte @BBL P2S 0.4 nozzle`. Print-start advanced options auto (flow dynamics on).
@@ -26,5 +26,5 @@ File named for the day the prediction was written; the print date goes in Result
 
 - Go/no-go: none.
 - Score: ____ (add to `SCORES.md`).
-- Print time and filament: slicer ____ min / ____ g; actual ____ min.
+- Print time and filament: slicer 25 min 58 s total (18 min 56 s printing) / 1.33 g, 0.40 m; actual ____ min.
 - Next: dry roll 1 (80 °C, 12 h, bed), then batch 1 starts with T0b.
