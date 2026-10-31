@@ -161,7 +161,7 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
 
 - Remote printing (side research 2026-10-31, `research/remote-printing.md`): no cloud needed. Bambuddy can upload
   and start prints over the LAN (needs a USB stick left in the printer). Recommended: Claude with Remote Control on
-  BigGuy slices in `C:\\PrintLocal` with our profiles and stages the file in Bambuddy by API key (Manage Library +
+  BigGuy slices in `C:\PrintLocal` with our profiles and stages the file in Bambuddy by API key (Manage Library +
   Queue only); carlie checks the camera and taps Print from the phone. Setup steps in §"Setup steps", waiting on
   carlie's go.
 
