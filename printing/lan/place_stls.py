@@ -4,7 +4,7 @@ import re, sys
 from pathlib import Path
 
 SRC = Path(r"C:\PrintLocal\v096")
-PARTS = {  # 256 x 256 bed; block spans x 25-230, y 8-250. Y 8 ran a few mm from the purge line: stay further back
+PARTS = {  # 256 x 256 bed. These are set 1b as printed; y 8 breaks FRONT_MARGIN, so re-lay before reusing
     "handle-plate-v096-0.125in.stl": (25, 8),
     "collar-v096.stl": (25, 176),
     "trigger-0.125in.stl": (141, 8),  # unchanged from v0.95, copied into v096/
@@ -12,7 +12,10 @@ PARTS = {  # 256 x 256 bed; block spans x 25-230, y 8-250. Y 8 ran a few mm from
     "lever-v096.stl": (170, 166),
     "lever-v096-loose.stl": (201, 166),
 }
+FRONT_MARGIN = 15  # mm from the bed's front edge; the load line runs at Y 0
 OUT = Path(sys.argv[1])
+if min(y for _, y in PARTS.values()) < FRONT_MARGIN:
+    sys.exit(f"stopped: a part starts in front of Y {FRONT_MARGIN}, too close to the load line")
 OUT.mkdir(parents=True, exist_ok=True)
 VERT = re.compile(r"vertex\s+(\S+)\s+(\S+)\s+(\S+)")
 for name, (x, y) in PARTS.items():
