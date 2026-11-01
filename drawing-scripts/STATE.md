@@ -27,5 +27,10 @@ One design version per thread. Start a fresh thread after two failed fixes of th
   with 0.29 mm (0.012") to spare, tighter than the drawn can (0.047"). No geometry change; carlie decides after the print test.
 - **Open issues:** none known in the drawings. The real test is the print: fit on real cans in both clip positions,
   trigger travel and up-stop, keeper lock, sleeve comfort.
-- **Next step:** wait for the P2S printer (planned 2026-10-27), print the v0.95 STLs, and test. Any change from the
+- **Print test result (2026-10-31) and rethink (2026-11-01):** the first printed v0.95 works but carlie finds the keyhole +
+  sliding keeper annoying, the tab hitch clips hang below the collar, tight clips are hard to fit, and it wiggles too much.
+  Rethink (suggestions, no geometry changed): `/mnt/project-files/design-rethink/ATTACHMENT-OPTIONS.md`. Main wiggle = tab in
+  the 0.090 collar slot; recommended direction B = self-latching keyhole (one-piece collar+handle, spring latch replaces the
+  keeper stack and all clips). Waiting on carlie's pick + 4 quick wiggle tests. Next version (v0.96) starts in a fresh thread.
+- **Old next step (done):** wait for the P2S printer (planned 2026-10-27), print the v0.95 STLs, and test. Any change from the
   test becomes v0.96 in a new thread, plus a buy-sheet update.
