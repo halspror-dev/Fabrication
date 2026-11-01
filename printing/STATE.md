@@ -147,7 +147,18 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   home LAN copies are fine, the cloud is the line**; print photos in ntfy alerts OK, files never. Details and
   settings: `monitoring.md`. Router changes postponed. Print v095-set1 finished: 81 g (carlie).
 
+- 2026-11-01 (LAN printing live, thread "Set up LAN printing through Bambuddy", PR #26): route B from
+  `research/remote-printing.md` works end to end. Claude via Remote Control on BigGuy slices headless with the
+  Studio 02.08.02.61 CLI from flattened stock P2S profiles + `fit-0.20-v1` (3 walls, hole comp 0.16) kept as files in
+  `C:\PrintLocal\lan\profiles\` (so a lost Studio GUI preset doesn't matter), uploads to Bambuddy and queues it
+  held; carlie checks the camera and taps Print; FTPS to the USB stick. Scripts and API notes: `lan/README.md`.
+  Bambuddy key "claude-bigguy" lives only in `C:\PrintLocal\bambuddy-api-key.txt`. Printer IP moved .78 -> .51
+  after a power loss (fixed in Bambuddy; not reserved yet). First job: C1 towers, 0 strings, height 20.07, but towers
+  4.89 vs 4.97 on T0a; slice outline proven identical, so physical/measuring (`tests/2026-11-01-lan-C1-stringing.md`).
+
 ## Next
+- LAN printing: next jobs go through `lan/` (slice -> `bambuddy_queue.py` -> carlie taps Print). Open: 2-wall vs
+  3-wall tower A/B; HMS 0500-0200-0003-000A unexplained (blank in Bambu's list); reserve printer IP on the router.
 - Batch 1 in a fresh thread (flow dynamics at print start, flow ratio, air deflector T3, elephant-foot cube C2,
   shrink bars C3), roll 1 as is. Still open from batch 0: flow ratio and max volumetric speed of the stock preset
   (Advanced toggle), v0 preset bundle export, clevis pin caliper check, room temperature/RH (hygrometer).
@@ -166,4 +177,5 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   carlie's go.
 
 ## What failed
-- Nothing yet.
+- 2026-11-01 C1 via LAN: tower width prediction missed (4.89 vs 4.94-5.02). Not the slicer. Open: one plate
+  with a 2-wall and a 3-wall tower to tell 3-wall shrink from caliper noise.
