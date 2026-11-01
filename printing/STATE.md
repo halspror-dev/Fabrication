@@ -141,7 +141,16 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   `tests/2026-10-31-T4T5-cube-and-bars-1.md`. T2 flow rate waits on whether Studio's Calibration tab works offline
   (else OrcaSlicer's flow calibration, offline, or our own coupon).
 
+- 2026-10-31/11-01 (same thread): carlie chose to print the v0.95 set before batch 1. Set 1 (stock 0.20 + 3 walls,
+  81 g, 2 h 17 min): collar 2.25 (in band), frame 3.24 (a bit over, probably plate texture), pin holes 6.10 and
+  screw hole 4.75 (0.25-0.36 small). Collar reprint with **X-Y hole compensation 0.16**: pin fits, "barely large"
+  = the fit Fabrication asked for. Records `tests/2026-10-31-part-v095-set1.md`, `-collar-hc016.md`. The printer is
+  now on the LAN with Bambuddy (set up in another thread), replacing USB-only.
+
 ## Next
+- Save `process-fit-0.20-v1` (3 walls, hole comp 0.16) and commit its export; caliper the collar holes and slots;
+  send set 1 fit findings to Fabrication's inbox once carlie's beta assembly is done. Batch 1 (`plans/batch1-steps.md`)
+  is still worth running for elephant foot and shrinkage before the final set.
 - carlie runs `plans/batch1-steps.md` A-E, one step at a time; fill the T3 and T4/T5 records, score T4/T5, then T2.
 - Before batch 2: get Python + manifold3d + shapely on BigGuy (or a Remote Control session there) and run
   `make_coupons.py C:\PrintLocal --private` from a Fabrication checkout outside OneDrive; install OrcaSlicer.
