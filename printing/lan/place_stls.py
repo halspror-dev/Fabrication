@@ -4,12 +4,13 @@ import re, sys
 from pathlib import Path
 
 SRC = Path(r"C:\PrintLocal\v096")
-PARTS = {  # 256 x 256 bed; block spans x 20-234, y 46-210, so it sits centred where the glue is
-    "handle-plate-v096-0.125in.stl": (20, 46),
-    "collar-v096.stl": (146, 46),
-    "lever-v096-tight.stl": (140, 134),
-    "lever-v096.stl": (174, 134),
-    "lever-v096-loose.stl": (208, 134),
+PARTS = {  # 256 x 256 bed; block spans x 25-230, y 8-250
+    "handle-plate-v096-0.125in.stl": (25, 8),
+    "collar-v096.stl": (25, 176),
+    "trigger-0.125in.stl": (141, 8),  # unchanged from v0.95, copied into v096/
+    "lever-v096-tight.stl": (139, 166),
+    "lever-v096.stl": (170, 166),
+    "lever-v096-loose.stl": (201, 166),
 }
 OUT = Path(sys.argv[1])
 OUT.mkdir(parents=True, exist_ok=True)
