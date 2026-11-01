@@ -147,6 +147,12 @@ the thread ends. One roadmap step per thread; after two failed fixes of the same
   home LAN copies are fine, the cloud is the line**; print photos in ntfy alerts OK, files never. Details and
   settings: `monitoring.md`. Router changes postponed. Print v095-set1 finished: 81 g (carlie).
 
+- 2026-11-01 (v0.96 set 1, thread "Print v0.96 prototype set"): one plate, collar, handle plate, 3 levers and the v0.95
+  trigger, sliced headless with fit-0.20-v1 and started through Bambuddy on carlie's request (the first start of a job by
+  Claude; carlie's words covered it). Collar plate slices to 2.20. Use `lan/place_stls.py` with `--arrange 0`:
+  `--arrange 1` rotates parts and packs them 2 mm apart. Stop a held-up job with `POST /queue/{id}/stop`; before each
+  start call `POST /printers/{id}/clear-plate`. Record: `tests/2026-11-01-part-v096-set1-1.md` (fit results still blank).
+
 ## Next
 - Batch 1 in a fresh thread (flow dynamics at print start, flow ratio, air deflector T3, elephant-foot cube C2,
   shrink bars C3), roll 1 as is. Still open from batch 0: flow ratio and max volumetric speed of the stock preset
