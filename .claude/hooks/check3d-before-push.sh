@@ -7,3 +7,7 @@ if ! out=$(python3 check3d.py templates.py 2>&1); then
   printf 'Push blocked: check3d.py failed.\n%s\n' "$(echo "$out" | tail -15)" >&2
   exit 2
 fi
+if ! out=$(python3 v096_3d.py check 2>&1); then
+  printf 'Push blocked: v096_3d.py check failed.\n%s\n' "$(echo "$out" | tail -15)" >&2
+  exit 2
+fi

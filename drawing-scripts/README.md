@@ -20,3 +20,8 @@ render3d.py is a custom z-buffer renderer. It replaced matplotlib's 3D plotting,
 6. `python3 pagediff.py OUTDIR` lists the render preview PNGs that changed against `OUTDIR/../last-review/`. `last-review/` is not in git: in a fresh checkout, build the previous version's commit into OUTDIR first and run `python3 pagediff.py OUTDIR --accept`, then build the new version.
 7. Send only the CHANGED/NEW pages, with a one-line note on what changed, to the `render-reviewer` subagent (`.claude/agents/render-reviewer.md`). It checks for wrong overlaps, labels, balloons, and both open/closed states, and replies PASS/FAIL per page. Once it passes, run `python3 pagediff.py OUTDIR --accept`.
 8. Before a version goes to carlie or out for an order, have the subagent check all pages once.
+
+## v0.96 (cam-lever clamp)
+`python3 v096.py` prints the v0.96 checks; `python3 v096_3d.py check` the 3D clearances (lever clamped/open, trigger rest/full,
+can seated/at the entry hole); `python3 v096_3d.py render OUTDIR` the 4 preview pages; `python3 v096_export.py OUTDIR` the STLs
+(mm) and DXFs. They reuse templates.py's trigger, sleeves and plate outline without changing it.
